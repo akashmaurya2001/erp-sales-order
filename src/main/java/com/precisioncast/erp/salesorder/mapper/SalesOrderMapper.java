@@ -21,16 +21,8 @@ public class SalesOrderMapper {
         }
 
         SalesOrder salesOrder = SalesOrder.builder()
-                .orderNumber(requestDto.getOrderNumber())
+                .customerId(requestDto.getCustomerId())
                 .orderDate(requestDto.getOrderDate())
-                .customerName(requestDto.getCustomerName())
-                .customerCode(requestDto.getCustomerCode())
-                .customerEmail(requestDto.getCustomerEmail())
-                .customerPhone(requestDto.getCustomerPhone())
-                .billingAddress(requestDto.getBillingAddress())
-                .shippingAddress(requestDto.getShippingAddress())
-                .taxAmount(requestDto.getTaxAmount())
-                .discountAmount(requestDto.getDiscountAmount())
                 .remarks(requestDto.getRemarks())
                 .build();
 
@@ -39,12 +31,9 @@ public class SalesOrderMapper {
         if (requestDto.getItems() != null) {
             for (SalesOrderItemRequestDto itemDto : requestDto.getItems()) {
                 SalesOrderItem item = SalesOrderItem.builder()
-                        .productCode(itemDto.getProductCode())
-                        .productName(itemDto.getProductName())
-                        .description(itemDto.getDescription())
+                        .productId(itemDto.getProductId())
                         .quantity(itemDto.getQuantity())
-                        .unitPrice(itemDto.getUnitPrice())
-                        .unit(itemDto.getUnit())
+                        .rate(itemDto.getRate())
                         .build();
 
                 item.setSalesOrder(salesOrder);
@@ -63,18 +52,9 @@ public class SalesOrderMapper {
 
         return SalesOrderResponseDto.builder()
                 .id(salesOrder.getId())
-                .orderNumber(salesOrder.getOrderNumber())
+                .customerId(salesOrder.getCustomerId())
                 .orderDate(salesOrder.getOrderDate())
-                .customerName(salesOrder.getCustomerName())
-                .customerCode(salesOrder.getCustomerCode())
-                .customerEmail(salesOrder.getCustomerEmail())
-                .customerPhone(salesOrder.getCustomerPhone())
-                .billingAddress(salesOrder.getBillingAddress())
-                .shippingAddress(salesOrder.getShippingAddress())
-                .status(salesOrder.getStatus())
-                .subtotal(salesOrder.getSubtotal())
-                .taxAmount(salesOrder.getTaxAmount())
-                .discountAmount(salesOrder.getDiscountAmount())
+                .orderStatus(salesOrder.getOrderStatus())
                 .totalAmount(salesOrder.getTotalAmount())
                 .remarks(salesOrder.getRemarks())
                 .items(toItemResponseDtoList(salesOrder.getItems()))
@@ -97,14 +77,11 @@ public class SalesOrderMapper {
         }
 
         return SalesOrderItemResponseDto.builder()
-                .id(item.getId())
-                .productCode(item.getProductCode())
-                .productName(item.getProductName())
-                .description(item.getDescription())
+                .itemId(item.getItemId())
+                .productId(item.getProductId())
                 .quantity(item.getQuantity())
-                .unitPrice(item.getUnitPrice())
-                .lineTotal(item.getLineTotal())
-                .unit(item.getUnit())
+                .rate(item.getRate())
+                .amount(item.getAmount())
                 .build();
     }
 }

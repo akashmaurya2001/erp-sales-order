@@ -1,10 +1,10 @@
 package com.precisioncast.erp.salesorder.service.impl;
 
+import com.precisioncast.erp.master.Repository.CustomerMasterRepository;
 import com.precisioncast.erp.salesorder.dto.SalesOrderRequestDto;
 import com.precisioncast.erp.salesorder.dto.SalesOrderResponseDto;
 import com.precisioncast.erp.salesorder.entity.SalesOrder;
 import com.precisioncast.erp.salesorder.entity.SalesOrderItem;
-import com.precisioncast.erp.salesorder.enums.SalesOrderStatus;
 import com.precisioncast.erp.salesorder.mapper.SalesOrderMapper;
 import com.precisioncast.erp.salesorder.repository.SalesOrderRepository;
 import com.precisioncast.erp.salesorder.service.SalesOrderService;
@@ -21,32 +21,27 @@ public class SalesOrderServiceImpl implements SalesOrderService {
 
     private final SalesOrderRepository salesOrderRepository;
     private final SalesOrderMapper salesOrderMapper;
+    private final CustomerMasterRepository customerMasterRepository;
 
     @Override
     public SalesOrderResponseDto createSalesOrder(SalesOrderRequestDto requestDto) {
-        if (salesOrderRepository.existsByOrderNumber(requestDto.getOrderNumber())) {
-            throw new RuntimeException("SalesOrder already exists with order number: " + requestDto.getOrderNumber());
+
+        if (!customerMasterRepository.existsById(requestDto.getCustomerId())) {
+            throw new RuntimeException("Customer not found with id " + requestDto.getCustomerId());
         }
 
         SalesOrder salesOrder = salesOrderMapper.toEntity(requestDto);
 
-        salesOrder.setStatus(SalesOrderStatus.CREATED);
+        salesOrder.setOrderStatus("DRAFT");
 
-        BigDecimal subtotal = BigDecimal.ZERO;
+        BigDecimal totalAmount = BigDecimal.ZERO;
 
         for (SalesOrderItem item : salesOrder.getItems()) {
-            BigDecimal lineTotal = item.getQuantity().multiply(item.getUnitPrice());
-            item.setLineTotal(lineTotal);
-            subtotal = subtotal.add(lineTotal);
+            BigDecimal amount = item.getQuantity().multiply(item.getRate());
+            item.setAmount(amount);
+            totalAmount = totalAmount.add(amount);
         }
 
-        BigDecimal taxAmount = requestDto.getTaxAmount() != null ? requestDto.getTaxAmount() : BigDecimal.ZERO;
-        BigDecimal discountAmount = requestDto.getDiscountAmount() != null ? requestDto.getDiscountAmount() : BigDecimal.ZERO;
-        BigDecimal totalAmount = subtotal.add(taxAmount).subtract(discountAmount);
-
-        salesOrder.setSubtotal(subtotal);
-        salesOrder.setTaxAmount(taxAmount);
-        salesOrder.setDiscountAmount(discountAmount);
         salesOrder.setTotalAmount(totalAmount);
 
         SalesOrder savedSalesOrder = salesOrderRepository.save(salesOrder);
@@ -65,7 +60,7 @@ public class SalesOrderServiceImpl implements SalesOrderService {
     @Override
     public SalesOrderResponseDto getSalesOrderById(Long id) {
         SalesOrder salesOrder = salesOrderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("SalesOrder not found with id: " + id));
+                .orElseThrow(() -> new RuntimeException("Sales order not found with id: " + id));
 
         return salesOrderMapper.toResponseDto(salesOrder);
     }
@@ -73,7 +68,7 @@ public class SalesOrderServiceImpl implements SalesOrderService {
     @Override
     public void deleteSalesOrder(Long id) {
         SalesOrder salesOrder = salesOrderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("SalesOrder not found with id: " + id));
+                .orElseThrow(() -> new RuntimeException("Sales order not found with id: " + id));
 
         salesOrderRepository.delete(salesOrder);
     }
