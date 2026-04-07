@@ -3,6 +3,8 @@ package com.precisioncast.erp.salesorder.controller;
 import com.precisioncast.erp.salesorder.dto.SalesOrderRequestDto;
 import com.precisioncast.erp.salesorder.dto.SalesOrderResponseDto;
 import com.precisioncast.erp.salesorder.service.SalesOrderService;
+import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -11,6 +13,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Hidden
+@Tag(
+        name = "Sales Order Module",
+        description = "APIs related to sales order creation, retrieval, & management."
+)
 @RestController
 @RequestMapping("/api/sales-orders")
 @RequiredArgsConstructor

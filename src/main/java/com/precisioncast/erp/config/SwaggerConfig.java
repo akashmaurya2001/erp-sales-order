@@ -16,6 +16,5 @@ public class SwaggerConfig {
                         .version("1.0")
                         .description("ERP Backend APIs for Auth, Sales Order, Delivery Challan and Sales Invoice"));
 
-
     }
 }

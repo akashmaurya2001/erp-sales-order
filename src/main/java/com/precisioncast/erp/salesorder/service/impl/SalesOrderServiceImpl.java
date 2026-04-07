@@ -1,6 +1,8 @@
 package com.precisioncast.erp.salesorder.service.impl;
 
+import com.precisioncast.erp.common.exception.ResourceNotFoundException;
 import com.precisioncast.erp.master.Repository.CustomerMasterRepository;
+import com.precisioncast.erp.master.Repository.ItemMasterRepository;
 import com.precisioncast.erp.salesorder.dto.SalesOrderRequestDto;
 import com.precisioncast.erp.salesorder.dto.SalesOrderResponseDto;
 import com.precisioncast.erp.salesorder.entity.SalesOrder;
@@ -22,13 +24,20 @@ public class SalesOrderServiceImpl implements SalesOrderService {
     private final SalesOrderRepository salesOrderRepository;
     private final SalesOrderMapper salesOrderMapper;
     private final CustomerMasterRepository customerMasterRepository;
+    private final ItemMasterRepository itemMasterRepository;
 
     @Override
     public SalesOrderResponseDto createSalesOrder(SalesOrderRequestDto requestDto) {
 
         if (!customerMasterRepository.existsById(requestDto.getCustomerId())) {
-            throw new RuntimeException("Customer not found with id " + requestDto.getCustomerId());
+            throw new ResourceNotFoundException("Customer not found with id " + requestDto.getCustomerId());
         }
+
+        requestDto.getItems().forEach(item -> {
+            if (!itemMasterRepository.existsById(item.getProductId())) {
+                throw new ResourceNotFoundException("Product not found with id " + item.getProductId());
+            }
+        });
 
         SalesOrder salesOrder = salesOrderMapper.toEntity(requestDto);
 
@@ -60,7 +69,7 @@ public class SalesOrderServiceImpl implements SalesOrderService {
     @Override
     public SalesOrderResponseDto getSalesOrderById(Long id) {
         SalesOrder salesOrder = salesOrderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Sales order not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Sales order not found with id: " + id));
 
         return salesOrderMapper.toResponseDto(salesOrder);
     }
@@ -68,7 +77,7 @@ public class SalesOrderServiceImpl implements SalesOrderService {
     @Override
     public void deleteSalesOrder(Long id) {
         SalesOrder salesOrder = salesOrderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Sales order not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Sales order not found with id: " + id));
 
         salesOrderRepository.delete(salesOrder);
     }
