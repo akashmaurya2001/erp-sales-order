@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Tag(
         name = "Dashboard Module",
-        description = "Role-based dashboard APIs for admin, sales production, quality, & procurement."
+        description = "Role-based dashboard APIs for admin, sales, production, quality, & procurement."
 )
 @RestController
 public class DashboardController {

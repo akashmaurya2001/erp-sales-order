@@ -13,5 +13,9 @@ public interface SalesOrderService {
 
     SalesOrderResponseDto getSalesOrderById(Long id);
 
+    SalesOrderResponseDto confirmSalesOrder(Long id);
+
+    SalesOrderResponseDto cancelSalesOrder(Long id);
+
     void deleteSalesOrder(Long id);
 }

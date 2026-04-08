@@ -1,5 +1,6 @@
 package com.precisioncast.erp.salesorder.service.impl;
 
+import com.precisioncast.erp.common.exception.InvalidOperationException;
 import com.precisioncast.erp.common.exception.ResourceNotFoundException;
 import com.precisioncast.erp.master.Repository.CustomerMasterRepository;
 import com.precisioncast.erp.master.Repository.ItemMasterRepository;
@@ -75,9 +76,51 @@ public class SalesOrderServiceImpl implements SalesOrderService {
     }
 
     @Override
+    public SalesOrderResponseDto confirmSalesOrder(Long id) {
+        SalesOrder salesOrder = salesOrderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("SalesOrder not found with id: " + id));
+
+        if (!"DRAFT".equalsIgnoreCase(salesOrder.getOrderStatus())) {
+            throw new InvalidOperationException(
+                    "Sales order cannot be confirmed because current status is: " + salesOrder.getOrderStatus()
+            );
+        }
+
+        salesOrder.setOrderStatus("CONFIRMED");
+
+        SalesOrder updatedSalesOrder = salesOrderRepository.save(salesOrder);
+
+        return salesOrderMapper.toResponseDto(updatedSalesOrder);
+    }
+
+    @Override
+    public  SalesOrderResponseDto cancelSalesOrder(Long id) {
+        SalesOrder salesOrder = salesOrderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("SalesOrder not found with id: " + id));
+
+        if (!"DRAFT".equalsIgnoreCase(salesOrder.getOrderStatus())) {
+            throw new InvalidOperationException(
+                    "Sales order cannot be cancelled because current status is: " + salesOrder.getOrderStatus()
+            );
+        }
+            salesOrder.setOrderStatus("CANCELLED");
+
+            SalesOrder updatedSalesOrder = salesOrderRepository.save(salesOrder);
+
+            return salesOrderMapper.toResponseDto(updatedSalesOrder);
+
+    }
+
+    @Override
     public void deleteSalesOrder(Long id) {
         SalesOrder salesOrder = salesOrderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Sales order not found with id: " + id));
+
+        if (!"DRAFT".equalsIgnoreCase(salesOrder.getOrderStatus())) {
+            throw new InvalidOperationException(
+                    "SalesOrder cannot be deleted because current status is: " + salesOrder.getOrderStatus()
+            );
+        }
 
         salesOrderRepository.delete(salesOrder);
     }

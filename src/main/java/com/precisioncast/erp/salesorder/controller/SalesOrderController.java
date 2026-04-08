@@ -44,6 +44,18 @@ public class SalesOrderController {
         return ResponseEntity.ok(response);
     }
 
+    @PutMapping("/{id}/confirm")
+    public ResponseEntity<SalesOrderResponseDto> confirmSalesOrder(@PathVariable Long id) {
+        SalesOrderResponseDto response = salesOrderService.confirmSalesOrder(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{id}/cancel")
+    public ResponseEntity<SalesOrderResponseDto> cancelSalesOrder(@PathVariable Long id) {
+        SalesOrderResponseDto response = salesOrderService.cancelSalesOrder(id);
+        return ResponseEntity.ok(response);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteSalesOrderById(@PathVariable Long id) {
         salesOrderService.deleteSalesOrder(id);
