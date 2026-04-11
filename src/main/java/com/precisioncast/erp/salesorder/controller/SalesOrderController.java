@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +17,7 @@ import java.util.List;
         name = "Sales Order Module",
         description = "APIs related to sales order creation, retrieval, & management."
 )
+
 @RestController
 @RequestMapping("/api/sales-orders")
 @RequiredArgsConstructor
@@ -28,38 +28,32 @@ public class SalesOrderController {
     @PostMapping
     public ResponseEntity<SalesOrderResponseDto> createSalesOrder(
             @Valid @RequestBody SalesOrderRequestDto requestDto) {
-        SalesOrderResponseDto response = salesOrderService.createSalesOrder(requestDto);
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
+        return ResponseEntity.ok(salesOrderService.createSalesOrder(requestDto));
     }
 
     @GetMapping
     public ResponseEntity<List<SalesOrderResponseDto>> getAllSalesOrders() {
-        List<SalesOrderResponseDto> response = salesOrderService.getAllSalesOrders();
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(salesOrderService.getAllSalesOrders());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<SalesOrderResponseDto> getSalesOrderById(@PathVariable Long id) {
-        SalesOrderResponseDto response = salesOrderService.getSalesOrderById(id);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(salesOrderService.getSalesOrderById(id));
     }
 
     @PutMapping("/{id}/confirm")
     public ResponseEntity<SalesOrderResponseDto> confirmSalesOrder(@PathVariable Long id) {
-        SalesOrderResponseDto response = salesOrderService.confirmSalesOrder(id);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(salesOrderService.confirmSalesOrder(id));
     }
 
     @PutMapping("/{id}/cancel")
     public ResponseEntity<SalesOrderResponseDto> cancelSalesOrder(@PathVariable Long id) {
-        SalesOrderResponseDto response = salesOrderService.cancelSalesOrder(id);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(salesOrderService.cancelSalesOrder(id));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteSalesOrderById(@PathVariable Long id) {
+    public ResponseEntity<String> deleteSalesOrder(@PathVariable Long id) {
         salesOrderService.deleteSalesOrder(id);
-        return ResponseEntity.ok("SalesOrder deleted successfully with id: " + id);
+        return ResponseEntity.ok("Sales order deleted successfully");
     }
-
 }

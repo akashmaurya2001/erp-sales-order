@@ -19,9 +19,9 @@ public class SalesInvoiceRequestDto {
     @NotNull(message = "Invoice date is required")
     private LocalDate invoiceDate;
 
+    private LocalDate dueDate;
+
     @NotNull(message = "Total amount is required")
     private BigDecimal totalAmount;
-
-    private String remark;
 
 }

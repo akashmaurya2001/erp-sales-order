@@ -11,7 +11,7 @@ public interface DeliveryChallanService {
 
     List<DeliveryChallanResponseDto> getAllDeliveryChallans();
 
-    DeliveryChallanResponseDto getDeliveryChallanById(Long id);
+    DeliveryChallanResponseDto getDeliveryChallanById(Long challanId);
 
-    void deleteDeliveryChallan(Long id);
+    void deleteDeliveryChallan(Long challanId);
 }

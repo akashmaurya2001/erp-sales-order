@@ -4,6 +4,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -15,6 +16,9 @@ public class SalesInvoiceResponseDto {
     private Long invoiceId;
     private Long salesOrderId;
     private LocalDate invoiceDate;
+    private LocalDate dueDate;
     private BigDecimal totalAmount;
-    private String remarks;
+    private String status;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

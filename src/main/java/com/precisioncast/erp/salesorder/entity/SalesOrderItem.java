@@ -26,13 +26,13 @@ public class SalesOrderItem {
     @Column(name = "product_id", nullable = false)
     private Long productId;
 
-    @Column(name = "quantity", nullable = false, precision = 12, scale = 2)
+    @Column(name = "quantity", precision = 12, scale = 2)
     private BigDecimal quantity;
 
-    @Column(name = "rate", nullable = false, precision = 12, scale = 2)
+    @Column(name = "rate", precision = 12, scale = 2)
     private BigDecimal rate;
 
-    @Column(name = "amount", nullable = false, precision = 12, scale = 2)
+    @Column(name = "amount", precision = 12, scale = 2)
     private BigDecimal amount;
 
 }

@@ -6,6 +6,4 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface DeliveryChallanRepository extends JpaRepository<DeliveryChallan, Long> {
-
-    boolean existsByDispatchId(Long dispatchId);
 }

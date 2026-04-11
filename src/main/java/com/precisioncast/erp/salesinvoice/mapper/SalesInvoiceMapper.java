@@ -17,7 +17,6 @@ public class SalesInvoiceMapper {
                 .salesOrderId(requestDto.getSalesOrderId())
                 .invoiceDate(requestDto.getInvoiceDate())
                 .totalAmount(requestDto.getTotalAmount())
-                .remarks(requestDto.getRemark())
                 .build();
     }
 
@@ -31,7 +30,6 @@ public class SalesInvoiceMapper {
                 .salesOrderId(salesInvoice.getSalesOrderId())
                 .invoiceDate(salesInvoice.getInvoiceDate())
                 .totalAmount(salesInvoice.getTotalAmount())
-                .remarks(salesInvoice.getRemarks())
                 .build();
     }
 }

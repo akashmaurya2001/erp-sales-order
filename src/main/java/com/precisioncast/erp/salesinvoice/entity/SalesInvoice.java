@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "invoice")
@@ -26,9 +27,20 @@ public class SalesInvoice {
     @Column(name = "invoice_date", nullable = false)
     private LocalDate invoiceDate;
 
+    @Column(name = "due_date")
+    private LocalDate dueDate;
+
     @Column(name = "total_amount", precision = 18, scale = 2)
     private BigDecimal totalAmount;
 
-    @Column(name = "remarks")
-    private String remarks;
+    @Column(name = "status")
+    private String status;
+
+    @Column(name = "created_at", insertable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", insertable = false, updatable = false)
+    private LocalDateTime updatedAt;
+
+
 }

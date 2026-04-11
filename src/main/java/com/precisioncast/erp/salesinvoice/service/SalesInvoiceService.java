@@ -11,7 +11,7 @@ public interface SalesInvoiceService {
 
     List<SalesInvoiceResponseDto> getAllSalesInvoices();
 
-    SalesInvoiceResponseDto getSalesInvoiceById(Long id);
+    SalesInvoiceResponseDto getSalesInvoiceById(Long invoiceId);
 
-    void deleteSalesInvoice(Long id);
+    void deleteSalesInvoice(Long invoiceId);
 }

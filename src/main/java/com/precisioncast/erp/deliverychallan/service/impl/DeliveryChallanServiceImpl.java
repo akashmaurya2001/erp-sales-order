@@ -1,69 +1,88 @@
 package com.precisioncast.erp.deliverychallan.service.impl;
 
-import com.precisioncast.erp.common.exception.InvalidOperationException;
-import com.precisioncast.erp.common.exception.ResourceNotFoundException;
 import com.precisioncast.erp.deliverychallan.dto.DeliveryChallanRequestDto;
 import com.precisioncast.erp.deliverychallan.dto.DeliveryChallanResponseDto;
 import com.precisioncast.erp.deliverychallan.entity.DeliveryChallan;
-import com.precisioncast.erp.deliverychallan.mapper.DeliveryChallanMapper;
 import com.precisioncast.erp.deliverychallan.repository.DeliveryChallanRepository;
 import com.precisioncast.erp.deliverychallan.service.DeliveryChallanService;
+import com.precisioncast.erp.dispatchnote.entity.DispatchNote;
 import com.precisioncast.erp.dispatchnote.repository.DispatchNoteRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class DeliveryChallanServiceImpl implements DeliveryChallanService {
 
     private final DeliveryChallanRepository deliveryChallanRepository;
-    private final DeliveryChallanMapper deliveryChallanMapper;
     private final DispatchNoteRepository dispatchNoteRepository;
 
     @Override
     public DeliveryChallanResponseDto createDeliveryChallan(DeliveryChallanRequestDto requestDto) {
 
-        if (!dispatchNoteRepository.existsById(requestDto.getDispatchId())) {
-            throw new ResourceNotFoundException("Dispatch Note Not Found with id: " + requestDto.getDispatchId());
-        }
+        DispatchNote dispatchNote = dispatchNoteRepository.findById(requestDto.getDispatchId())
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Dispatch note not found with id: " + requestDto.getDispatchId()
+                ));
 
-        if (deliveryChallanRepository.existsByDispatchId(requestDto.getDispatchId())) {
-            throw new InvalidOperationException(
-                    "Delivery challan Already Exists for dispatch id: " + requestDto.getDispatchId()
-            );
-        }
+        DeliveryChallan deliveryChallan = new DeliveryChallan();
+        deliveryChallan.setDispatchId(dispatchNote.getDispatchId());
+        deliveryChallan.setChallanDate(requestDto.getChallanDate());
+        deliveryChallan.setTotalQuantity(requestDto.getTotalQuantity());
+        deliveryChallan.setRemarks(requestDto.getRemarks());
 
-        DeliveryChallan deliveryChallan = deliveryChallanMapper.toEntity(requestDto);
+        DeliveryChallan saved = deliveryChallanRepository.save(deliveryChallan);
 
-        DeliveryChallan savedDeliveryChallan = deliveryChallanRepository.save(deliveryChallan);
-
-        return  deliveryChallanMapper.toResponseDto(savedDeliveryChallan);
+        return mapToResponseDto(saved);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<DeliveryChallanResponseDto> getAllDeliveryChallans() {
-        return deliveryChallanRepository.findAll()
-                .stream()
-                .map(deliveryChallanMapper::toResponseDto)
-                .collect(Collectors.toList());
+        List<DeliveryChallan> challans = deliveryChallanRepository.findAll();
+        List<DeliveryChallanResponseDto> responseDtos = new ArrayList<>();
+
+        for (DeliveryChallan challan : challans) {
+            responseDtos.add(mapToResponseDto(challan));
+        }
+
+        return responseDtos;
     }
 
     @Override
-    public DeliveryChallanResponseDto getDeliveryChallanById(Long id) {
-        DeliveryChallan deliveryChallan = deliveryChallanRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Delivery Challan not found with id: " + id));
+    @Transactional(readOnly = true)
+    public DeliveryChallanResponseDto getDeliveryChallanById(Long challanId) {
+        DeliveryChallan challan = deliveryChallanRepository.findById(challanId)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Delivery challan not found with id: " + challanId
+                ));
 
-        return deliveryChallanMapper.toResponseDto(deliveryChallan);
+        return mapToResponseDto(challan);
     }
 
     @Override
-    public void deleteDeliveryChallan(Long id) {
-        DeliveryChallan deliveryChallan = deliveryChallanRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Delivery Challan not found with id: " + id));
+    public void deleteDeliveryChallan(Long challanId) {
+        DeliveryChallan challan = deliveryChallanRepository.findById(challanId)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Delivery challan not found with id: " + challanId
+                ));
 
-        deliveryChallanRepository.delete(deliveryChallan);
+        deliveryChallanRepository.delete(challan);
+    }
+
+    private DeliveryChallanResponseDto mapToResponseDto(DeliveryChallan challan) {
+        return DeliveryChallanResponseDto.builder()
+                .challanId(challan.getChallanId())
+                .dispatchId(challan.getDispatchId())
+                .challanDate(challan.getChallanDate())
+                .totalQuantity(challan.getTotalQuantity())
+                .remarks(challan.getRemarks())
+                .build();
     }
 }

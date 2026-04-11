@@ -11,7 +11,7 @@ public interface DispatchNoteService {
 
     List<DispatchNoteResponseDto> getAllDispatchNotes();
 
-    DispatchNoteResponseDto getDispatchNoteById(Long id);
+    DispatchNoteResponseDto getDispatchNoteById(Long dispatchId);
 
-    void deleteDispatchNote(Long id);
+    void deleteDispatchNote(Long dispatchId);
 }

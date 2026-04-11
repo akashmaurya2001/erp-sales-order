@@ -1,8 +1,6 @@
 package com.precisioncast.erp.salesorder.mapper;
 
-import com.precisioncast.erp.salesorder.dto.SalesOrderItemRequestDto;
 import com.precisioncast.erp.salesorder.dto.SalesOrderItemResponseDto;
-import com.precisioncast.erp.salesorder.dto.SalesOrderRequestDto;
 import com.precisioncast.erp.salesorder.dto.SalesOrderResponseDto;
 import com.precisioncast.erp.salesorder.entity.SalesOrder;
 import com.precisioncast.erp.salesorder.entity.SalesOrderItem;
@@ -10,78 +8,55 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 public class SalesOrderMapper {
-
-    public SalesOrder toEntity(SalesOrderRequestDto requestDto) {
-        if (requestDto == null) {
-            return null;
-        }
-
-        SalesOrder salesOrder = SalesOrder.builder()
-                .customerId(requestDto.getCustomerId())
-                .orderDate(requestDto.getOrderDate())
-                .remarks(requestDto.getRemarks())
-                .build();
-
-        List<SalesOrderItem> items = new ArrayList<>();
-
-        if (requestDto.getItems() != null) {
-            for (SalesOrderItemRequestDto itemDto : requestDto.getItems()) {
-                SalesOrderItem item = SalesOrderItem.builder()
-                        .productId(itemDto.getProductId())
-                        .quantity(itemDto.getQuantity())
-                        .rate(itemDto.getRate())
-                        .build();
-
-                item.setSalesOrder(salesOrder);
-                items.add(item);
-            }
-        }
-
-        salesOrder.setItems(items);
-        return salesOrder;
-    }
 
     public SalesOrderResponseDto toResponseDto(SalesOrder salesOrder) {
         if (salesOrder == null) {
             return null;
         }
 
-        return SalesOrderResponseDto.builder()
-                .id(salesOrder.getId())
-                .customerId(salesOrder.getCustomerId())
-                .orderDate(salesOrder.getOrderDate())
-                .orderStatus(salesOrder.getOrderStatus())
-                .totalAmount(salesOrder.getTotalAmount())
-                .remarks(salesOrder.getRemarks())
-                .items(toItemResponseDtoList(salesOrder.getItems()))
-                .build();
-    }
+        List<SalesOrderItemResponseDto> itemResponseDtos = new ArrayList<>();
 
-    public List<SalesOrderItemResponseDto> toItemResponseDtoList(List<SalesOrderItem> items) {
-        if (items == null) {
-            return new ArrayList<>();
+        if (salesOrder.getItems() != null) {
+            for (SalesOrderItem item : salesOrder.getItems()) {
+                SalesOrderItemResponseDto itemDto = new SalesOrderItemResponseDto();
+                itemDto.setItemId(item.getItemId());
+                itemDto.setProductId(item.getProductId());
+                itemDto.setQuantity(item.getQuantity());
+                itemDto.setRate(item.getRate());
+                itemDto.setAmount(item.getAmount());
+
+                itemResponseDtos.add(itemDto);
+            }
         }
 
-        return items.stream()
-                .map(this::toItemResponseDto)
-                .collect(Collectors.toList());
+        SalesOrderResponseDto responseDto = new SalesOrderResponseDto();
+        responseDto.setSalesOrderId(salesOrder.getSalesOrderId());
+        responseDto.setCustomerId(salesOrder.getCustomerId());
+        responseDto.setOrderDate(salesOrder.getOrderDate());
+        responseDto.setOrderStatus(salesOrder.getOrderStatus());
+        responseDto.setTotalAmount(salesOrder.getTotalAmount());
+        responseDto.setRemarks(salesOrder.getRemarks());
+        responseDto.setCreatedAt(salesOrder.getCreatedAt());
+        responseDto.setUpdatedAt(salesOrder.getUpdatedAt());
+        responseDto.setItems(itemResponseDtos);
+
+        return responseDto;
     }
 
-    public SalesOrderItemResponseDto toItemResponseDto(SalesOrderItem item) {
-        if (item == null) {
-            return null;
+    public List<SalesOrderResponseDto> toResponseDtoList(List<SalesOrder> salesOrders) {
+        List<SalesOrderResponseDto> responseDtos = new ArrayList<>();
+
+        if (salesOrders == null) {
+            return responseDtos;
         }
 
-        return SalesOrderItemResponseDto.builder()
-                .itemId(item.getItemId())
-                .productId(item.getProductId())
-                .quantity(item.getQuantity())
-                .rate(item.getRate())
-                .amount(item.getAmount())
-                .build();
+        for (SalesOrder salesOrder : salesOrders) {
+            responseDtos.add(toResponseDto(salesOrder));
+        }
+
+        return responseDtos;
     }
 }

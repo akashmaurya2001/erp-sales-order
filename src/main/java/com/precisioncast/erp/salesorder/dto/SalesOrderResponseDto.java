@@ -4,6 +4,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -13,11 +14,13 @@ import java.util.List;
 @Builder
 public class SalesOrderResponseDto {
 
-    private Long id;
+    private Long salesOrderId;
     private Long customerId;
     private LocalDate orderDate;
     private String orderStatus;
     private BigDecimal totalAmount;
     private String remarks;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     private List<SalesOrderItemResponseDto> items;
 }

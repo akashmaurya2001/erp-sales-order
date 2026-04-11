@@ -11,11 +11,11 @@ public interface SalesOrderService {
 
     List<SalesOrderResponseDto> getAllSalesOrders();
 
-    SalesOrderResponseDto getSalesOrderById(Long id);
+    SalesOrderResponseDto getSalesOrderById(Long salesOrderId);
 
-    SalesOrderResponseDto confirmSalesOrder(Long id);
+    SalesOrderResponseDto confirmSalesOrder(Long salesOrderId);
 
-    SalesOrderResponseDto cancelSalesOrder(Long id);
+    SalesOrderResponseDto cancelSalesOrder(Long salesOrderId);
 
-    void deleteSalesOrder(Long id);
+    void deleteSalesOrder(Long salesOrderId);
 }
