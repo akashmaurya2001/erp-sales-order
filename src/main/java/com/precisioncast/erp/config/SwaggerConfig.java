@@ -21,9 +21,9 @@ public class SwaggerConfig {
         server.setDescription("Ngrok HTTPS Server");
         return new OpenAPI()
                 .info(new Info()
-                        .title("Precision Cast ERP API | Total APIs 44")
+                        .title("Precision Cast ERP API | Total APIs 52")
                         .version("1.0")
-                        .description("ERP Backend APIs for Auth, Sales Order, Delivery Challan and Sales Invoice"))
+                        .description("ERP Backend APIs for Auth, Sales Order, Delivery Challan,Sales Invoice & Dispatch"))
                 .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
 
                 .components(new Components()
