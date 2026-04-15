@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Hidden
+
 @Tag(
         name = "Sales Order Module",
         description = "APIs related to sales order creation, retrieval, & management."
@@ -41,12 +41,12 @@ public class SalesOrderController {
         return ResponseEntity.ok(salesOrderService.getSalesOrderById(id));
     }
 
-    @PutMapping("/{id}/confirm")
+    @PatchMapping("/{id}/confirm")
     public ResponseEntity<SalesOrderResponseDto> confirmSalesOrder(@PathVariable Long id) {
         return ResponseEntity.ok(salesOrderService.confirmSalesOrder(id));
     }
 
-    @PutMapping("/{id}/cancel")
+    @PatchMapping("/{id}/cancel")
     public ResponseEntity<SalesOrderResponseDto> cancelSalesOrder(@PathVariable Long id) {
         return ResponseEntity.ok(salesOrderService.cancelSalesOrder(id));
     }
