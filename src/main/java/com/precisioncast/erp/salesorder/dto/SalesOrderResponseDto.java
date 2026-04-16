@@ -20,6 +20,9 @@ public class SalesOrderResponseDto {
     private String orderStatus;
     private BigDecimal totalAmount;
     private String remarks;
+    private Boolean isUrgent;
+    private Boolean isOnHold;
+    private Boolean customerVerified;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private List<SalesOrderItemResponseDto> items;

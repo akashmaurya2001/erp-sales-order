@@ -16,6 +16,7 @@ public class SalesOrderItemResponseDto {
     private BigDecimal quantity;
     private BigDecimal rate;
     private BigDecimal amount;
+    private Boolean cancelled;
 
 
 }

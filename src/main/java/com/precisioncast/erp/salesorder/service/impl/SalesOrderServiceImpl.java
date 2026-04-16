@@ -1,13 +1,10 @@
 package com.precisioncast.erp.salesorder.service.impl;
 
-import com.precisioncast.erp.master.entity.CustomerMaster;
-import com.precisioncast.erp.master.entity.ItemMaster;
 import com.precisioncast.erp.master.Repository.CustomerMasterRepository;
 import com.precisioncast.erp.master.Repository.ItemMasterRepository;
-import com.precisioncast.erp.salesorder.dto.SalesOrderItemRequestDto;
-import com.precisioncast.erp.salesorder.dto.SalesOrderItemResponseDto;
-import com.precisioncast.erp.salesorder.dto.SalesOrderRequestDto;
-import com.precisioncast.erp.salesorder.dto.SalesOrderResponseDto;
+import com.precisioncast.erp.master.entity.CustomerMaster;
+import com.precisioncast.erp.master.entity.ItemMaster;
+import com.precisioncast.erp.salesorder.dto.*;
 import com.precisioncast.erp.salesorder.entity.SalesOrder;
 import com.precisioncast.erp.salesorder.entity.SalesOrderItem;
 import com.precisioncast.erp.salesorder.repository.SalesOrderRepository;
@@ -18,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,28 +30,24 @@ public class SalesOrderServiceImpl implements SalesOrderService {
 
     @Override
     public SalesOrderResponseDto createSalesOrder(SalesOrderRequestDto requestDto) {
-
-
         CustomerMaster customer = customerMasterRepository.findById(requestDto.getCustomerId())
                 .orElseThrow(() -> new EntityNotFoundException(
                         "Customer not found with id: " + requestDto.getCustomerId()
                 ));
 
-
         SalesOrder salesOrder = new SalesOrder();
         salesOrder.setCustomerId(customer.getCustomerId());
         salesOrder.setOrderDate(requestDto.getOrderDate());
         salesOrder.setOrderStatus("PENDING");
-
         salesOrder.setRemarks(requestDto.getRemarks());
+        salesOrder.setIsUrgent(false);
+        salesOrder.setIsOnHold(false);
+        salesOrder.setCustomerVerified(false);
 
         List<SalesOrderItem> itemEntities = new ArrayList<>();
         BigDecimal totalAmount = BigDecimal.ZERO;
 
-
         for (SalesOrderItemRequestDto itemDto : requestDto.getItems()) {
-
-
             ItemMaster itemMaster = itemMasterRepository.findById(itemDto.getProductId())
                     .orElseThrow(() -> new EntityNotFoundException(
                             "Product not found with id: " + itemDto.getProductId()
@@ -78,15 +72,14 @@ public class SalesOrderServiceImpl implements SalesOrderService {
         salesOrder.setItems(itemEntities);
 
         SalesOrder savedSalesOrder = salesOrderRepository.save(salesOrder);
-
         return mapToResponseDto(savedSalesOrder);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<SalesOrderResponseDto> getAllSalesOrders() {
-        List<SalesOrder> salesOrders = salesOrderRepository.findAll();
-        return salesOrders.stream()
+        return salesOrderRepository.findAll()
+                .stream()
                 .map(this::mapToResponseDto)
                 .toList();
     }
@@ -94,20 +87,141 @@ public class SalesOrderServiceImpl implements SalesOrderService {
     @Override
     @Transactional(readOnly = true)
     public SalesOrderResponseDto getSalesOrderById(Long salesOrderId) {
-        SalesOrder salesOrder = salesOrderRepository.findById(salesOrderId)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Sales order not found with id: " + salesOrderId
-                ));
-
+        SalesOrder salesOrder = getSalesOrderEntity(salesOrderId);
         return mapToResponseDto(salesOrder);
     }
 
     @Override
-    public SalesOrderResponseDto confirmSalesOrder(Long salesOrderId) {
-        SalesOrder salesOrder = salesOrderRepository.findById(salesOrderId)
+    public SalesOrderResponseDto updateSalesOrder(Long salesOrderId, SalesOrderUpdateRequestDto requestDto) {
+        SalesOrder salesOrder = getSalesOrderEntity(salesOrderId);
+
+        if ("CONFIRMED".equalsIgnoreCase(salesOrder.getOrderStatus()) ||
+                "CANCELLED".equalsIgnoreCase(salesOrder.getOrderStatus())) {
+            throw new IllegalStateException("Only PENDING sales order can be updated");
+        }
+
+        customerMasterRepository.findById(requestDto.getCustomerId())
                 .orElseThrow(() -> new EntityNotFoundException(
-                        "Sales order not found with id: " + salesOrderId
+                        "Customer not found with id: " + requestDto.getCustomerId()
                 ));
+
+        salesOrder.setCustomerId(requestDto.getCustomerId());
+        salesOrder.setOrderDate(requestDto.getOrderDate());
+        salesOrder.setRemarks(requestDto.getRemarks());
+
+        salesOrder.getItems().clear();
+
+        BigDecimal totalAmount = BigDecimal.ZERO;
+        List<SalesOrderItem> updatedItems = new ArrayList<>();
+
+        for (SalesOrderItemRequestDto itemDto : requestDto.getItems()) {
+            ItemMaster itemMaster = itemMasterRepository.findById(itemDto.getProductId())
+                    .orElseThrow(() -> new EntityNotFoundException(
+                            "Product not found with id: " + itemDto.getProductId()
+                    ));
+
+            BigDecimal quantity = itemDto.getQuantity();
+            BigDecimal rate = itemDto.getRate();
+            BigDecimal amount = quantity.multiply(rate);
+
+            SalesOrderItem item = new SalesOrderItem();
+            item.setSalesOrder(salesOrder);
+            item.setProductId(itemMaster.getItemId());
+            item.setQuantity(quantity);
+            item.setRate(rate);
+            item.setAmount(amount);
+
+            updatedItems.add(item);
+            totalAmount = totalAmount.add(amount);
+        }
+
+        salesOrder.setItems(updatedItems);
+        salesOrder.setTotalAmount(totalAmount);
+
+        SalesOrder updated = salesOrderRepository.save(salesOrder);
+        return mapToResponseDto(updated);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<SalesOrderResponseDto> searchSalesOrders(Long customerId, Long itemId, String status, LocalDate from, LocalDate to) {
+        List<SalesOrder> allOrders = salesOrderRepository.findAll();
+        List<SalesOrderResponseDto> result = new ArrayList<>();
+
+        for (SalesOrder order : allOrders) {
+            boolean match = true;
+
+            if (customerId != null && !customerId.equals(order.getCustomerId())) {
+                match = false;
+            }
+
+            if (status != null && !status.isBlank() &&
+                    (order.getOrderStatus() == null || !order.getOrderStatus().equalsIgnoreCase(status))) {
+                match = false;
+            }
+
+            if (from != null && (order.getOrderDate() == null || order.getOrderDate().isBefore(from))) {
+                match = false;
+            }
+
+            if (to != null && (order.getOrderDate() == null || order.getOrderDate().isAfter(to))) {
+                match = false;
+            }
+
+            if (itemId != null) {
+                boolean itemMatch = false;
+                if (order.getItems() != null) {
+                    for (SalesOrderItem item : order.getItems()) {
+                        if (itemId.equals(item.getProductId())) {
+                            itemMatch = true;
+                            break;
+                        }
+                    }
+                }
+                if (!itemMatch) {
+                    match = false;
+                }
+            }
+
+            if (match) {
+                result.add(mapToResponseDto(order));
+            }
+        }
+
+        return result;
+    }
+
+    @Override
+    public SalesOrderResponseDto updateSalesOrderStatus(Long salesOrderId, String status) {
+        SalesOrder salesOrder = getSalesOrderEntity(salesOrderId);
+        salesOrder.setOrderStatus(status);
+        return mapToResponseDto(salesOrderRepository.save(salesOrder));
+    }
+
+    @Override
+    public SalesOrderResponseDto verifyCustomer(Long salesOrderId) {
+        SalesOrder salesOrder = getSalesOrderEntity(salesOrderId);
+        salesOrder.setCustomerVerified(true);
+        return mapToResponseDto(salesOrderRepository.save(salesOrder));
+    }
+
+    @Override
+    public SalesOrderResponseDto markUrgent(Long salesOrderId) {
+        SalesOrder salesOrder = getSalesOrderEntity(salesOrderId);
+        salesOrder.setIsUrgent(true);
+        return mapToResponseDto(salesOrderRepository.save(salesOrder));
+    }
+
+    @Override
+    public SalesOrderResponseDto markHold(Long salesOrderId) {
+        SalesOrder salesOrder = getSalesOrderEntity(salesOrderId);
+        salesOrder.setIsOnHold(true);
+        return mapToResponseDto(salesOrderRepository.save(salesOrder));
+    }
+
+    @Override
+    public SalesOrderResponseDto confirmSalesOrder(Long salesOrderId) {
+        SalesOrder salesOrder = getSalesOrderEntity(salesOrderId);
 
         if ("CONFIRMED".equalsIgnoreCase(salesOrder.getOrderStatus())) {
             throw new IllegalStateException("Sales order is already confirmed");
@@ -122,39 +236,28 @@ public class SalesOrderServiceImpl implements SalesOrderService {
         }
 
         salesOrder.setOrderStatus("CONFIRMED");
-
-        SalesOrder updatedSalesOrder = salesOrderRepository.save(salesOrder);
-        return mapToResponseDto(updatedSalesOrder);
+        return mapToResponseDto(salesOrderRepository.save(salesOrder));
     }
 
     @Override
     public SalesOrderResponseDto cancelSalesOrder(Long salesOrderId) {
-        SalesOrder salesOrder = salesOrderRepository.findById(salesOrderId)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Sales order not found with id: " + salesOrderId
-                ));
+        SalesOrder salesOrder = getSalesOrderEntity(salesOrderId);
 
         if ("CANCELLED".equalsIgnoreCase(salesOrder.getOrderStatus())) {
             throw new IllegalStateException("Sales order is already cancelled");
         }
 
         if ("CONFIRMED".equalsIgnoreCase(salesOrder.getOrderStatus())) {
-
             throw new IllegalStateException("Confirmed sales order cannot be cancelled directly");
         }
 
         salesOrder.setOrderStatus("CANCELLED");
-
-        SalesOrder updatedSalesOrder = salesOrderRepository.save(salesOrder);
-        return mapToResponseDto(updatedSalesOrder);
+        return mapToResponseDto(salesOrderRepository.save(salesOrder));
     }
 
     @Override
     public void deleteSalesOrder(Long salesOrderId) {
-        SalesOrder salesOrder = salesOrderRepository.findById(salesOrderId)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Sales order not found with id: " + salesOrderId
-                ));
+        SalesOrder salesOrder = getSalesOrderEntity(salesOrderId);
 
         if (!"PENDING".equalsIgnoreCase(salesOrder.getOrderStatus())) {
             throw new IllegalStateException("Only PENDING sales order can be deleted");
@@ -163,20 +266,27 @@ public class SalesOrderServiceImpl implements SalesOrderService {
         salesOrderRepository.delete(salesOrder);
     }
 
+    private SalesOrder getSalesOrderEntity(Long salesOrderId) {
+        return salesOrderRepository.findById(salesOrderId)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Sales order not found with id: " + salesOrderId
+                ));
+    }
+
     private SalesOrderResponseDto mapToResponseDto(SalesOrder salesOrder) {
         List<SalesOrderItemResponseDto> itemResponseDtos = new ArrayList<>();
 
         if (salesOrder.getItems() != null) {
             for (SalesOrderItem item : salesOrder.getItems()) {
-                SalesOrderItemResponseDto itemResponseDto = SalesOrderItemResponseDto.builder()
-                        .itemId(item.getItemId())
-                        .productId(item.getProductId())
-                        .quantity(item.getQuantity())
-                        .rate(item.getRate())
-                        .amount(item.getAmount())
-                        .build();
-
-                itemResponseDtos.add(itemResponseDto);
+                itemResponseDtos.add(
+                        SalesOrderItemResponseDto.builder()
+                                .itemId(item.getItemId())
+                                .productId(item.getProductId())
+                                .quantity(item.getQuantity())
+                                .rate(item.getRate())
+                                .amount(item.getAmount())
+                                .build()
+                );
             }
         }
 
@@ -187,6 +297,9 @@ public class SalesOrderServiceImpl implements SalesOrderService {
                 .orderStatus(salesOrder.getOrderStatus())
                 .totalAmount(salesOrder.getTotalAmount())
                 .remarks(salesOrder.getRemarks())
+                .isUrgent(salesOrder.getIsUrgent())
+                .isOnHold(salesOrder.getIsOnHold())
+                .customerVerified(salesOrder.getCustomerVerified())
                 .createdAt(salesOrder.getCreatedAt())
                 .updatedAt(salesOrder.getUpdatedAt())
                 .items(itemResponseDtos)

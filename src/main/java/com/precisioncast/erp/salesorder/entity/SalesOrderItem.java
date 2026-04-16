@@ -35,4 +35,7 @@ public class SalesOrderItem {
     @Column(name = "amount", precision = 12, scale = 2)
     private BigDecimal amount;
 
+    @Column(name = "cancelled")
+    private Boolean cancelled;
+
 }

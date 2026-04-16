@@ -38,6 +38,15 @@ public class SalesOrder {
     @Column(name = "remarks")
     private String remarks;
 
+    @Column(name = "is_urgent")
+    private Boolean isUrgent;
+
+    @Column(name = "is_on_hold")
+    private Boolean isOnHold;
+
+    @Column(name = "customer_verified")
+    private Boolean customerVerified;
+
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
