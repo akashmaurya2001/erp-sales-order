@@ -85,7 +85,7 @@ public class SalesOrderServiceImpl implements SalesOrderService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+
     public SalesOrderResponseDto getSalesOrderById(Long salesOrderId) {
         SalesOrder salesOrder = getSalesOrderEntity(salesOrderId);
         return mapToResponseDto(salesOrder);
@@ -112,7 +112,6 @@ public class SalesOrderServiceImpl implements SalesOrderService {
         salesOrder.getItems().clear();
 
         BigDecimal totalAmount = BigDecimal.ZERO;
-        List<SalesOrderItem> updatedItems = new ArrayList<>();
 
         for (SalesOrderItemRequestDto itemDto : requestDto.getItems()) {
             ItemMaster itemMaster = itemMasterRepository.findById(itemDto.getProductId())
@@ -130,12 +129,12 @@ public class SalesOrderServiceImpl implements SalesOrderService {
             item.setQuantity(quantity);
             item.setRate(rate);
             item.setAmount(amount);
+            item.setCancelled(false);
 
-            updatedItems.add(item);
+            salesOrder.getItems().add(item);
             totalAmount = totalAmount.add(amount);
         }
 
-        salesOrder.setItems(updatedItems);
         salesOrder.setTotalAmount(totalAmount);
 
         SalesOrder updated = salesOrderRepository.save(salesOrder);

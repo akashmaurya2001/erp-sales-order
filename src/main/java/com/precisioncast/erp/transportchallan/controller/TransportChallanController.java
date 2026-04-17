@@ -3,6 +3,7 @@ package com.precisioncast.erp.transportchallan.controller;
 import com.precisioncast.erp.transportchallan.dto.TransportChallanRequestDto;
 import com.precisioncast.erp.transportchallan.dto.TransportChallanResponseDto;
 import com.precisioncast.erp.transportchallan.service.TransportChallanService;
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Hidden
 @RestController
 @RequestMapping("/api/transport-challans")
 @RequiredArgsConstructor

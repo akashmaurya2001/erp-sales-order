@@ -3,6 +3,7 @@ package com.precisioncast.erp.deliveryschedule.controller;
 import com.precisioncast.erp.deliveryschedule.dto.SalesOrderDeliveryScheduleRequestDto;
 import com.precisioncast.erp.deliveryschedule.dto.SalesOrderDeliveryScheduleResponseDto;
 import com.precisioncast.erp.deliveryschedule.service.SalesOrderDeliveryScheduleService;
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Hidden
 @RestController
 @RequestMapping("/api/delivery-schedules")
 @RequiredArgsConstructor
