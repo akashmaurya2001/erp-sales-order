@@ -4,10 +4,12 @@ import com.precisioncast.erp.salesquotation.dto.SalesQuotationRequestDto;
 import com.precisioncast.erp.salesquotation.dto.SalesQuotationResponseDto;
 import com.precisioncast.erp.salesquotation.service.SalesQuotationService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,6 +17,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/salesQuotation")
 @RequiredArgsConstructor
+@Validated
 public class SalesQuotationController {
 
     private final SalesQuotationService salesQuotationService;
@@ -30,9 +33,11 @@ public class SalesQuotationController {
         return ResponseEntity.ok(salesQuotationService.getAllQuotations());
     }
 
+
     @GetMapping("/{quotationId}")
     public ResponseEntity<SalesQuotationResponseDto> getQuotationById(
-            @PathVariable Long quotationId) {
+            @PathVariable @Positive(message = "Quotation id must be greater then 0")
+            Long quotationId) {
         return ResponseEntity.ok(salesQuotationService.getQuotationById(quotationId));
     }
 
@@ -47,47 +52,57 @@ public class SalesQuotationController {
         );
     }
 
+
     @PutMapping("/update/{quotationId}")
-    public ResponseEntity<SalesQuotationResponseDto> updateQuotation(
-            @PathVariable Long quotationId,
-            @Valid @RequestBody SalesQuotationRequestDto requestDto) {
-        return ResponseEntity.ok(
-                salesQuotationService.updateQuotation(quotationId, requestDto)
-        );
+    public ResponseEntity<?> updateQuotation(
+            @PathVariable
+            @Positive(message = "Quotation id must be greater than 0")
+            Long quotationId,
+            @RequestBody SalesQuotationRequestDto requestDto) {
+        return ResponseEntity.ok(salesQuotationService.updateQuotation(quotationId, requestDto));
     }
+
 
     @PatchMapping("/approve/{quotationId}")
     public ResponseEntity<SalesQuotationResponseDto> approveQuotation(
-            @PathVariable Long quotationId) {
+            @PathVariable @Positive(message = "Quotation id must be greater than 0")
+            Long quotationId) {
         return ResponseEntity.ok(salesQuotationService.approveQuotation(quotationId));
     }
 
     @PatchMapping("/reject/{quotationId}")
     public ResponseEntity<SalesQuotationResponseDto> rejectQuotation(
-            @PathVariable Long quotationId) {
+            @PathVariable @Positive(message = "Quotation id must be greater than 0")
+            Long quotationId) {
         return ResponseEntity.ok(salesQuotationService.rejectQuotation(quotationId));
     }
 
     @PatchMapping("/activate/{quotationId}")
     public ResponseEntity<SalesQuotationResponseDto> activateQuotation(
-            @PathVariable Long quotationId) {
+            @PathVariable @Positive(message = "Quotation id must be greater than 0")
+            Long quotationId) {
         return ResponseEntity.ok(salesQuotationService.activateQuotation(quotationId));
     }
 
     @PatchMapping("/deactivate/{quotationId}")
     public ResponseEntity<SalesQuotationResponseDto> deactivateQuotation(
-            @PathVariable Long quotationId) {
+            @PathVariable @Positive(message = "Quotation id must be greater than 0")
+            Long quotationId) {
         return ResponseEntity.ok(salesQuotationService.deactivateQuotation(quotationId));
     }
 
     @DeleteMapping("/delete/{quotationId}")
-    public ResponseEntity<String> deleteQuotation(@PathVariable Long quotationId) {
+    public ResponseEntity<String> deleteQuotation(
+            @PathVariable @Positive(message = "Quotation id must be greater than 0")
+            Long quotationId) {
         salesQuotationService.deleteQuotation(quotationId);
         return ResponseEntity.ok("Sales quotation deleted successfully");
     }
 
     @GetMapping("/export/{quotationId}")
-    public ResponseEntity<byte[]> exportQuotation(@PathVariable Long quotationId) {
+    public ResponseEntity<byte[]> exportQuotation(
+            @PathVariable @Positive(message = "Quotation id must be greater than 0")
+            Long quotationId) {
         byte[] fileData = salesQuotationService.exportQuotation(quotationId);
 
         return ResponseEntity.ok()

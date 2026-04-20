@@ -12,6 +12,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletResponse;
+import java.util.Map;
+
 
 @Configuration
 @EnableWebSecurity
@@ -39,16 +43,29 @@ public class SecurityConfig {
                                 "/webjars/**",
                                 "/error"
                         ).permitAll()
-
                         .requestMatchers("/api/dashboard/admin").hasRole("ADMIN")
                         .requestMatchers("/api/dashboard/sales").hasAnyRole("ADMIN", "SALES_MANAGER")
                         .requestMatchers("/api/dashboard/production").hasAnyRole("ADMIN", "PRODUCTION_MANAGER")
                         .requestMatchers("/api/dashboard/quality").hasAnyRole("ADMIN", "QUALITY_MANAGER")
                         .requestMatchers("/api/dashboard/procurement").hasAnyRole("ADMIN", "PROCUREMENT_MANAGER")
-
                         .requestMatchers("/api/test/secure", "/api/test/me").authenticated()
-
                         .anyRequest().authenticated()
+                )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json");
+
+                            new ObjectMapper().writeValue(
+                                    response.getOutputStream(),
+                                    Map.of(
+                                            "status", 401,
+                                            "error", "Unauthorized",
+                                            "message", "Authentication required. Please provide a valid token.",
+                                            "path", request.getRequestURI()
+                                    )
+                            );
+                        })
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())

@@ -1,5 +1,6 @@
 package com.precisioncast.erp.salesquotation.service.impl;
 
+import com.precisioncast.erp.common.exception.InvalidOperationException;
 import com.precisioncast.erp.master.Repository.CustomerMasterRepository;
 import com.precisioncast.erp.master.Repository.ItemMasterRepository;
 import com.precisioncast.erp.master.entity.CustomerMaster;
@@ -165,41 +166,65 @@ public class SalesQuotationServiceImpl implements SalesQuotationService {
 
     @Override
     public SalesQuotationResponseDto updateQuotation(Long quotationId, SalesQuotationRequestDto requestDto) {
-        SalesQuotation quotation = getQuotationEntity(quotationId);
 
-        customerMasterRepository.findById(requestDto.getCustomerId())
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Customer not found with id: " + requestDto.getCustomerId()
+        SalesQuotation quotation = salesQuotationRepository.findById(quotationId)
+                .orElseThrow(() -> new InvalidOperationException(
+                        "Provided quotation id is not valid"
                 ));
 
-        quotation.setCustomerId(requestDto.getCustomerId());
-        quotation.setQuotationDate(requestDto.getQuotationDate());
-        quotation.setValidityDate(requestDto.getValidityDate());
-
-        quotation.getItems().clear();
-
-        BigDecimal totalAmount = BigDecimal.ZERO;
-
-        for (SalesQuotationItemRequestDto itemDto : requestDto.getItems()) {
-            ItemMaster itemMaster = itemMasterRepository.findById(itemDto.getProductId())
-                    .orElseThrow(() -> new EntityNotFoundException(
-                            "Item not found with id: " + itemDto.getProductId()
-                    ));
-
-            BigDecimal amount = itemDto.getQuantity().multiply(itemDto.getRate());
-
-            SalesQuotationItem item = new SalesQuotationItem();
-            item.setSalesQuotation(quotation);
-            item.setProductId(itemMaster.getItemId());
-            item.setQuantity(itemDto.getQuantity());
-            item.setRate(itemDto.getRate());
-            item.setAmount(amount);
-
-            quotation.getItems().add(item);
-            totalAmount = totalAmount.add(amount);
+        if (requestDto == null) {
+            throw new InvalidOperationException("Request body is required");
         }
 
-        quotation.setTotalAmount(totalAmount);
+        if (requestDto.getCustomerId() == null
+                && requestDto.getQuotationDate() == null
+                && requestDto.getValidityDate() == null
+                && (requestDto.getItems() == null || requestDto.getItems().isEmpty())) {
+            throw new InvalidOperationException("At least one field is required to update sales quotation");
+        }
+
+        if (requestDto.getCustomerId() != null) {
+            customerMasterRepository.findById(requestDto.getCustomerId())
+                    .orElseThrow(() -> new EntityNotFoundException(
+                            "Customer not found with id: " + requestDto.getCustomerId()
+                    ));
+            quotation.setCustomerId(requestDto.getCustomerId());
+        }
+
+        if (requestDto.getQuotationDate() != null) {
+            quotation.setQuotationDate(requestDto.getQuotationDate());
+        }
+
+        if (requestDto.getValidityDate() != null) {
+            quotation.setValidityDate(requestDto.getValidityDate());
+        }
+
+        if (requestDto.getItems() != null && !requestDto.getItems().isEmpty()) {
+            quotation.getItems().clear();
+
+            BigDecimal totalAmount = BigDecimal.ZERO;
+
+            for (SalesQuotationItemRequestDto itemDto : requestDto.getItems()) {
+                ItemMaster itemMaster = itemMasterRepository.findById(itemDto.getProductId())
+                        .orElseThrow(() -> new EntityNotFoundException(
+                                "Item not found with id: " + itemDto.getProductId()
+                        ));
+
+                BigDecimal amount = itemDto.getQuantity().multiply(itemDto.getRate());
+
+                SalesQuotationItem item = new SalesQuotationItem();
+                item.setSalesQuotation(quotation);
+                item.setProductId(itemMaster.getItemId());
+                item.setQuantity(itemDto.getQuantity());
+                item.setRate(itemDto.getRate());
+                item.setAmount(amount);
+
+                quotation.getItems().add(item);
+                totalAmount = totalAmount.add(amount);
+            }
+
+            quotation.setTotalAmount(totalAmount);
+        }
 
         SalesQuotation updatedQuotation = salesQuotationRepository.save(quotation);
         return mapToResponseDto(updatedQuotation);
