@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -95,24 +96,52 @@ public class SalesQuotationServiceImpl implements SalesQuotationService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<SalesQuotationResponseDto> searchQuotations(Long customerId, Long itemId, String status) {
+    public List<SalesQuotationResponseDto> searchQuotations(
+            Long quotationId,
+            Long customerId,
+            Long itemId,
+            String status,
+            LocalDate quotationDate,
+            LocalDate fromDate,
+            LocalDate toDate
+    ) {
         List<SalesQuotation> allQuotations = salesQuotationRepository.findAll();
         List<SalesQuotationResponseDto> result = new ArrayList<>();
 
         for (SalesQuotation quotation : allQuotations) {
             boolean match = true;
 
+            if (quotationId != null && !quotationId.equals(quotation.getQuotationId())) {
+                match = false;
+            }
+
             if (customerId != null && !customerId.equals(quotation.getCustomerId())) {
                 match = false;
             }
 
-            if (status != null && !status.isBlank() &&
-                    (quotation.getStatus() == null || !quotation.getStatus().equalsIgnoreCase(status))) {
+            if (status != null && !status.isBlank()
+                    && (quotation.getStatus() == null || !quotation.getStatus().equalsIgnoreCase(status))) {
+                match = false;
+            }
+
+            if (quotationDate != null
+                    && (quotation.getQuotationDate() == null || !quotation.getQuotationDate().isEqual(quotationDate))) {
+                match = false;
+            }
+
+            if (fromDate != null
+                    && (quotation.getQuotationDate() == null || quotation.getQuotationDate().isBefore(fromDate))) {
+                match = false;
+            }
+
+            if (toDate != null
+                    && (quotation.getQuotationDate() == null || quotation.getQuotationDate().isAfter(toDate))) {
                 match = false;
             }
 
             if (itemId != null) {
                 boolean itemMatch = false;
+
                 if (quotation.getItems() != null) {
                     for (SalesQuotationItem item : quotation.getItems()) {
                         if (itemId.equals(item.getProductId())) {
@@ -121,6 +150,7 @@ public class SalesQuotationServiceImpl implements SalesQuotationService {
                         }
                     }
                 }
+
                 if (!itemMatch) {
                     match = false;
                 }
@@ -205,6 +235,15 @@ public class SalesQuotationServiceImpl implements SalesQuotationService {
             BigDecimal totalAmount = BigDecimal.ZERO;
 
             for (SalesQuotationItemRequestDto itemDto : requestDto.getItems()) {
+
+                if (itemDto.getQuantity() != null && itemDto.getQuantity().compareTo(BigDecimal.ZERO) <= 0) {
+                    throw new InvalidOperationException("Quantity must be greater than 0");
+                }
+
+                if (itemDto.getRate() != null && itemDto.getRate().compareTo(BigDecimal.ZERO) <= 0) {
+                    throw new InvalidOperationException("Rate must be greater than 0");
+                }
+
                 ItemMaster itemMaster = itemMasterRepository.findById(itemDto.getProductId())
                         .orElseThrow(() -> new EntityNotFoundException(
                                 "Item not found with id: " + itemDto.getProductId()
@@ -233,6 +272,19 @@ public class SalesQuotationServiceImpl implements SalesQuotationService {
     @Override
     public SalesQuotationResponseDto approveQuotation(Long quotationId) {
         SalesQuotation quotation = getQuotationEntity(quotationId);
+
+        if ("REJECTED".equalsIgnoreCase(quotation.getStatus())) {
+            throw new InvalidOperationException("Rejected quotation cannot be approved");
+        }
+
+        if ("INACTIVE".equalsIgnoreCase(quotation.getStatus())) {
+            throw new InvalidOperationException("Please activate the quotation before approval");
+        }
+
+        if ("APPROVED".equalsIgnoreCase(quotation.getStatus())) {
+            throw new InvalidOperationException("Quotation is already approved");
+        }
+
         quotation.setStatus("APPROVED");
         return mapToResponseDto(salesQuotationRepository.save(quotation));
     }
@@ -240,27 +292,87 @@ public class SalesQuotationServiceImpl implements SalesQuotationService {
     @Override
     public SalesQuotationResponseDto rejectQuotation(Long quotationId) {
         SalesQuotation quotation = getQuotationEntity(quotationId);
+
+        if ("APPROVED".equalsIgnoreCase(quotation.getStatus())) {
+            throw new InvalidOperationException("Approved quotation cannot be rejected");
+        }
+
+        if ("REJECTED".equalsIgnoreCase(quotation.getStatus())) {
+            throw new InvalidOperationException("Quotation is already rejected");
+        }
+
+        if ("INACTIVE".equalsIgnoreCase(quotation.getStatus())) {
+            throw new InvalidOperationException("Please activate the quotation before rejection");
+        }
+
         quotation.setStatus("REJECTED");
         return mapToResponseDto(salesQuotationRepository.save(quotation));
     }
 
     @Override
     public SalesQuotationResponseDto activateQuotation(Long quotationId) {
-        SalesQuotation quotation = getQuotationEntity(quotationId);
+        SalesQuotation quotation = salesQuotationRepository.findById(quotationId)
+                .orElseThrow(() -> new EntityNotFoundException("Sales quotation not found with id: " + quotationId));
+
+        String status = quotation.getStatus();
+
+        if ("REJECTED".equalsIgnoreCase(status)) {
+            throw new InvalidOperationException("Cannot activate a rejected quotation");
+        }
+
+        if ("APPROVED".equalsIgnoreCase(status)) {
+            if (quotation.getValidityDate() == null) {
+                throw new InvalidOperationException("Cannot activate approved quotation because validity date is missing");
+            }
+
+            if (quotation.getValidityDate().isBefore(java.time.LocalDate.now())) {
+                throw new InvalidOperationException("Cannot activate an expired approved quotation");
+            }
+        }
+
+        if ("ACTIVE".equalsIgnoreCase(status)) {
+            throw new InvalidOperationException("Quotation is already active");
+        }
+
         quotation.setStatus("ACTIVE");
-        return mapToResponseDto(salesQuotationRepository.save(quotation));
+
+        SalesQuotation savedQuotation = salesQuotationRepository.save(quotation);
+        return mapToResponseDto(savedQuotation);
     }
 
     @Override
     public SalesQuotationResponseDto deactivateQuotation(Long quotationId) {
-        SalesQuotation quotation = getQuotationEntity(quotationId);
+        SalesQuotation quotation = salesQuotationRepository.findById(quotationId)
+                .orElseThrow(() -> new EntityNotFoundException("Sales quotation not found with id: " + quotationId));
+
+        String status = quotation.getStatus();
+
+        if ("REJECTED".equalsIgnoreCase(status)) {
+            throw new InvalidOperationException("Cannot deactivate a rejected quotation");
+        }
+
+        if ("INACTIVE".equalsIgnoreCase(status)) {
+            throw new InvalidOperationException("Quotation is already inactive");
+        }
+
         quotation.setStatus("INACTIVE");
-        return mapToResponseDto(salesQuotationRepository.save(quotation));
+
+        SalesQuotation savedQuotation = salesQuotationRepository.save(quotation);
+        return mapToResponseDto(savedQuotation);
     }
 
     @Override
     public void deleteQuotation(Long quotationId) {
-        SalesQuotation quotation = getQuotationEntity(quotationId);
+
+        SalesQuotation quotation = salesQuotationRepository.findById(quotationId)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Sales quotation not found with id: " + quotationId
+                ));
+
+        if ("APPROVED".equalsIgnoreCase(quotation.getStatus())) {
+            throw new InvalidOperationException("Cannot delete an approved quotation");
+        }
+
         salesQuotationRepository.delete(quotation);
     }
 
