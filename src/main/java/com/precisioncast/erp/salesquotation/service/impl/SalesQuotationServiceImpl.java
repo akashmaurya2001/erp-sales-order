@@ -363,14 +363,23 @@ public class SalesQuotationServiceImpl implements SalesQuotationService {
 
     @Override
     public void deleteQuotation(Long quotationId) {
-
         SalesQuotation quotation = salesQuotationRepository.findById(quotationId)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Sales quotation not found with id: " + quotationId
+                .orElseThrow(() -> new InvalidOperationException(
+                        "Quotation already deleted or does not exist with id: " + quotationId
                 ));
 
-        if ("APPROVED".equalsIgnoreCase(quotation.getStatus())) {
+        String status = quotation.getStatus();
+
+        if ("APPROVED".equalsIgnoreCase(status)) {
             throw new InvalidOperationException("Cannot delete an approved quotation");
+        }
+
+        if ("ACTIVE".equalsIgnoreCase(status)) {
+            throw new InvalidOperationException("Cannot delete an active quotation");
+        }
+
+        if ("INACTIVE".equalsIgnoreCase(status)) {
+            throw new InvalidOperationException("Cannot delete an inactive quotation");
         }
 
         salesQuotationRepository.delete(quotation);

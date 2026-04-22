@@ -24,7 +24,7 @@ public class CustomerPriceList {
     private Long customerId;
 
     @Column(name = "product_id", nullable = false)
-    private Long productId;
+    private Long itemId;
 
     @Column(name = "special_rate", precision = 12, scale = 2)
     private BigDecimal specialRate;
