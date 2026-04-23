@@ -1,6 +1,6 @@
 package com.precisioncast.erp.master.service.impl;
 
-import com.precisioncast.erp.master.Repository.DriverMasterRepository;
+import com.precisioncast.erp.master.repository.DriverMasterRepository;
 import com.precisioncast.erp.master.dto.DriverMasterRequestDto;
 import com.precisioncast.erp.master.dto.DriverMasterResponseDto;
 import com.precisioncast.erp.master.entity.DriverMaster;

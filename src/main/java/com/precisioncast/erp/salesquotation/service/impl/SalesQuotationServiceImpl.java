@@ -1,8 +1,8 @@
 package com.precisioncast.erp.salesquotation.service.impl;
 
 import com.precisioncast.erp.common.exception.InvalidOperationException;
-import com.precisioncast.erp.master.Repository.CustomerMasterRepository;
-import com.precisioncast.erp.master.Repository.ItemMasterRepository;
+import com.precisioncast.erp.master.repository.CustomerMasterRepository;
+import com.precisioncast.erp.master.repository.ItemMasterRepository;
 import com.precisioncast.erp.master.entity.CustomerMaster;
 import com.precisioncast.erp.master.entity.ItemMaster;
 import com.precisioncast.erp.salesquotation.dto.SalesQuotationItemRequestDto;

@@ -1,6 +1,6 @@
 package com.precisioncast.erp.salesorder.service.impl;
 
-import com.precisioncast.erp.master.Repository.ItemMasterRepository;
+import com.precisioncast.erp.master.repository.ItemMasterRepository;
 import com.precisioncast.erp.master.entity.ItemMaster;
 import com.precisioncast.erp.salesorder.dto.SalesOrderItemRequestDto;
 import com.precisioncast.erp.salesorder.dto.SalesOrderItemResponseDto;

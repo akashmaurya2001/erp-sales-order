@@ -1,6 +1,6 @@
 package com.precisioncast.erp.master.service.impl;
 
-import com.precisioncast.erp.master.Repository.ItemMasterRepository;
+import com.precisioncast.erp.master.repository.ItemMasterRepository;
 import com.precisioncast.erp.master.dto.ItemMasterBulkRequestDto;
 import com.precisioncast.erp.master.dto.ItemMasterRequestDto;
 import com.precisioncast.erp.master.dto.ItemMasterResponseDto;

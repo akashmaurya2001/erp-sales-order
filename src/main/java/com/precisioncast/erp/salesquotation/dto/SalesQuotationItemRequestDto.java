@@ -21,6 +21,6 @@ public class SalesQuotationItemRequestDto {
     private BigDecimal quantity;
 
     @NotNull(message = "Rate is required")
-    @DecimalMin(value = "0.00", inclusive = true, message = "Rate cannot be negative")
+    @DecimalMin(value = "0.01", message = "Rate must be greater than 0")
     private BigDecimal rate;
 }

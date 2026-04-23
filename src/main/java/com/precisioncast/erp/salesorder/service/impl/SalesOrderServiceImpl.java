@@ -1,7 +1,7 @@
 package com.precisioncast.erp.salesorder.service.impl;
 
-import com.precisioncast.erp.master.Repository.CustomerMasterRepository;
-import com.precisioncast.erp.master.Repository.ItemMasterRepository;
+import com.precisioncast.erp.master.repository.CustomerMasterRepository;
+import com.precisioncast.erp.master.repository.ItemMasterRepository;
 import com.precisioncast.erp.master.entity.CustomerMaster;
 import com.precisioncast.erp.master.entity.ItemMaster;
 import com.precisioncast.erp.salesorder.dto.*;
@@ -193,15 +193,44 @@ public class SalesOrderServiceImpl implements SalesOrderService {
     @Override
     public SalesOrderResponseDto updateSalesOrderStatus(Long salesOrderId, String status) {
         SalesOrder salesOrder = getSalesOrderEntity(salesOrderId);
-        salesOrder.setOrderStatus(status);
-        return mapToResponseDto(salesOrderRepository.save(salesOrder));
-    }
 
+        if (status == null || status.isBlank()) {
+            throw new IllegalStateException("Order status is required");
+        }
+
+        String normalizedStatus = status.trim().toUpperCase();
+
+        List<String> allowedStatuses = List.of("PENDING", "CONFIRMED", "DELIVERED", "CANCELLED");
+
+        if (!allowedStatuses.contains(normalizedStatus)) {
+            throw new IllegalStateException(
+                    "Invalid order status. Allowed values are: PENDING, CONFIRMED, DELIVERED, CANCELLED"
+            );
+        }
+
+        if (normalizedStatus.equalsIgnoreCase(salesOrder.getOrderStatus())) {
+            throw new IllegalStateException("Sales order is already in " + normalizedStatus + " status");
+        }
+
+        salesOrder.setOrderStatus(normalizedStatus);
+
+        SalesOrderResponseDto responseDto = mapToResponseDto(salesOrderRepository.save(salesOrder));
+        responseDto.setMessage("Sales order status updated successfully");
+        return responseDto;
+    }
     @Override
     public SalesOrderResponseDto verifyCustomer(Long salesOrderId) {
         SalesOrder salesOrder = getSalesOrderEntity(salesOrderId);
+
+        if (Boolean.TRUE.equals(salesOrder.getCustomerVerified())) {
+            throw new IllegalStateException("Customer is already verified for this sales order");
+        }
+
         salesOrder.setCustomerVerified(true);
-        return mapToResponseDto(salesOrderRepository.save(salesOrder));
+
+        SalesOrderResponseDto responseDto = mapToResponseDto(salesOrderRepository.save(salesOrder));
+        responseDto.setMessage("Customer verified successfully");
+        return responseDto;
     }
 
     @Override
@@ -302,6 +331,7 @@ public class SalesOrderServiceImpl implements SalesOrderService {
                 .createdAt(salesOrder.getCreatedAt())
                 .updatedAt(salesOrder.getUpdatedAt())
                 .items(itemResponseDtos)
+                .message(null)
                 .build();
     }
 }

@@ -26,4 +26,6 @@ public class SalesOrderResponseDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private List<SalesOrderItemResponseDto> items;
+
+    private String message;
 }

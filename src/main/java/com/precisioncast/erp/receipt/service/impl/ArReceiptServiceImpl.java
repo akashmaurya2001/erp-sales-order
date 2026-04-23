@@ -1,6 +1,6 @@
 package com.precisioncast.erp.receipt.service.impl;
 
-import com.precisioncast.erp.master.Repository.CustomerMasterRepository;
+import com.precisioncast.erp.master.repository.CustomerMasterRepository;
 import com.precisioncast.erp.receipt.dto.ArReceiptRequestDto;
 import com.precisioncast.erp.receipt.dto.ArReceiptResponseDto;
 import com.precisioncast.erp.receipt.entity.ArReceipt;

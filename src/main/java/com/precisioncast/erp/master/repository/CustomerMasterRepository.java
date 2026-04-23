@@ -1,4 +1,4 @@
-package com.precisioncast.erp.master.Repository;
+package com.precisioncast.erp.master.repository;
 
 import com.precisioncast.erp.master.entity.CustomerMaster;
 import org.springframework.data.jpa.repository.JpaRepository;

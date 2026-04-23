@@ -18,10 +18,10 @@ public class SalesOrderItemController {
 
     private final SalesOrderItemService salesOrderItemService;
 
-    @PostMapping("/add/{salesOrderId}/{productId}/{qty}")
+    @PostMapping("/add/{salesOrderId}/{itemId}/{qty}")
     public ResponseEntity<SalesOrderItemResponseDto> addSalesOrderItem(
             @PathVariable Long salesOrderId,
-            @PathVariable Long productId,
+            @PathVariable("itemId") Long productId,
             @PathVariable BigDecimal qty
     ) {
         return ResponseEntity.ok(

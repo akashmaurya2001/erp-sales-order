@@ -3,7 +3,7 @@ package com.precisioncast.erp.master.service.impl;
 import com.precisioncast.erp.master.dto.VehicleMasterRequestDto;
 import com.precisioncast.erp.master.dto.VehicleMasterResponseDto;
 import com.precisioncast.erp.master.entity.VehicleMaster;
-import com.precisioncast.erp.master.Repository.VehicleMasterRepository;
+import com.precisioncast.erp.master.repository.VehicleMasterRepository;
 import com.precisioncast.erp.master.service.VehicleMasterService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
