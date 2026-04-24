@@ -3,8 +3,8 @@ package com.precisioncast.erp.salesquotation.service.impl;
 import com.precisioncast.erp.common.exception.InvalidOperationException;
 import com.precisioncast.erp.customerpricelist.entity.CustomerPriceList;
 import com.precisioncast.erp.customerpricelist.repository.CustomerPriceListRepository;
-import com.precisioncast.erp.master.repository.ItemMasterRepository;
 import com.precisioncast.erp.master.entity.ItemMaster;
+import com.precisioncast.erp.master.repository.ItemMasterRepository;
 import com.precisioncast.erp.salesquotation.dto.SalesQuotationItemRequestDto;
 import com.precisioncast.erp.salesquotation.dto.SalesQuotationItemResponseDto;
 import com.precisioncast.erp.salesquotation.entity.SalesQuotation;
@@ -33,10 +33,7 @@ public class SalesQuotationItemServiceImpl implements SalesQuotationItemService 
 
     @Override
     public SalesQuotationItemResponseDto addQuotationItem(Long quotationId, Long productId, BigDecimal qty) {
-        SalesQuotation quotation = salesQuotationRepository.findById(quotationId)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Quotation not found with id: " + quotationId
-                ));
+        SalesQuotation quotation = getEditableQuotation(quotationId);
 
         ItemMaster itemMaster = itemMasterRepository.findById(productId)
                 .orElseThrow(() -> new EntityNotFoundException(
@@ -61,7 +58,6 @@ public class SalesQuotationItemServiceImpl implements SalesQuotationItemService 
         quotationItem.setAmount(amount);
 
         SalesQuotationItem saved = salesQuotationItemRepository.save(quotationItem);
-
         recalculateQuotationTotal(quotation);
 
         return mapToResponseDto(saved);

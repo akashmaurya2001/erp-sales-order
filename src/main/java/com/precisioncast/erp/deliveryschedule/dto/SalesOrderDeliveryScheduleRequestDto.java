@@ -1,5 +1,6 @@
 package com.precisioncast.erp.deliveryschedule.dto;
 
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
@@ -13,13 +14,10 @@ import java.time.LocalDate;
 @Builder
 public class SalesOrderDeliveryScheduleRequestDto {
 
-    @NotNull(message = "Sales order id is required")
-    private Long salesOrderId;
-
     @NotNull(message = "Delivery date is required")
     private LocalDate deliveryDate;
 
+    @NotNull(message = "Quantity is required")
+    @DecimalMin(value = "0.01", message = "Quantity must be greater than 0")
     private BigDecimal quantity;
-
-    private String status;
 }

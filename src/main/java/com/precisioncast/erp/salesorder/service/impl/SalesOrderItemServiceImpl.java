@@ -1,5 +1,7 @@
 package com.precisioncast.erp.salesorder.service.impl;
 
+import com.precisioncast.erp.customerpricelist.entity.CustomerPriceList;
+import com.precisioncast.erp.customerpricelist.repository.CustomerPriceListRepository;
 import com.precisioncast.erp.master.repository.ItemMasterRepository;
 import com.precisioncast.erp.master.entity.ItemMaster;
 import com.precisioncast.erp.salesorder.dto.SalesOrderItemRequestDto;
@@ -27,6 +29,7 @@ public class SalesOrderItemServiceImpl implements SalesOrderItemService {
     private final SalesOrderRepository salesOrderRepository;
     private final SalesOrderItemRepository salesOrderItemRepository;
     private final ItemMasterRepository itemMasterRepository;
+    private final CustomerPriceListRepository customerPriceListRepository;
 
     @Override
     public SalesOrderItemResponseDto addSalesOrderItem(Long salesOrderId, Long itemId, BigDecimal qty) {
@@ -44,14 +47,22 @@ public class SalesOrderItemServiceImpl implements SalesOrderItemService {
                         "Item not found with id: " + itemId
                 ));
 
+        CustomerPriceList priceList = customerPriceListRepository
+                .findByCustomerIdAndItemId(salesOrder.getCustomerId(), itemMaster.getItemId())
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Customer price not found for customerId " + salesOrder.getCustomerId()
+                                + " and itemId " + itemMaster.getItemId()
+                ));
+
+        BigDecimal rate = priceList.getSpecialRate();
+        BigDecimal amount = qty.multiply(rate);
+
         SalesOrderItem salesOrderItem = new SalesOrderItem();
         salesOrderItem.setSalesOrder(salesOrder);
         salesOrderItem.setProductId(itemMaster.getItemId());
         salesOrderItem.setQuantity(qty);
-
-        BigDecimal rate = BigDecimal.ZERO;
         salesOrderItem.setRate(rate);
-        salesOrderItem.setAmount(qty.multiply(rate));
+        salesOrderItem.setAmount(amount);
         salesOrderItem.setCancelled(false);
 
         SalesOrderItem saved = salesOrderItemRepository.save(salesOrderItem);
