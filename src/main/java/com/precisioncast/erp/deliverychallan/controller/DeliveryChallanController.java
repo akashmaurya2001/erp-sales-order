@@ -1,43 +1,52 @@
 package com.precisioncast.erp.deliverychallan.controller;
 
-import com.precisioncast.erp.deliverychallan.dto.DeliveryChallanRequestDto;
 import com.precisioncast.erp.deliverychallan.dto.DeliveryChallanResponseDto;
 import com.precisioncast.erp.deliverychallan.service.DeliveryChallanService;
-import io.swagger.v3.oas.annotations.Hidden;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Hidden
 @RestController
-@RequestMapping("/api/delivery-challans")
+@RequestMapping("/api/deliveryChallan")
 @RequiredArgsConstructor
 public class DeliveryChallanController {
 
-    private final DeliveryChallanService deliveryChallanService;
+    private final DeliveryChallanService service;
 
-    @PostMapping
-    public ResponseEntity<DeliveryChallanResponseDto> createDeliveryChallan(
-            @Valid @RequestBody DeliveryChallanRequestDto requestDto) {
-        return ResponseEntity.ok(deliveryChallanService.createDeliveryChallan(requestDto));
+    @PostMapping("/create/{salesOrderId}/{dispatchId}")
+    public ResponseEntity<DeliveryChallanResponseDto> createChallan(
+            @PathVariable Long salesOrderId,
+            @PathVariable Long dispatchId
+    ) {
+        return ResponseEntity.ok(service.createChallan(salesOrderId, dispatchId));
     }
 
-    @GetMapping
-    public ResponseEntity<List<DeliveryChallanResponseDto>> getAllDeliveryChallans() {
-        return ResponseEntity.ok(deliveryChallanService.getAllDeliveryChallans());
+    @GetMapping("/{challanId}")
+    public ResponseEntity<DeliveryChallanResponseDto> getChallanById(
+            @PathVariable Long challanId
+    ) {
+        return ResponseEntity.ok(service.getChallanById(challanId));
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<DeliveryChallanResponseDto> getDeliveryChallanById(@PathVariable Long id) {
-        return ResponseEntity.ok(deliveryChallanService.getDeliveryChallanById(id));
+    @GetMapping("/list")
+    public ResponseEntity<List<DeliveryChallanResponseDto>> getAllChallans() {
+        return ResponseEntity.ok(service.getAllChallans());
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteDeliveryChallan(@PathVariable Long id) {
-        deliveryChallanService.deleteDeliveryChallan(id);
+    @PatchMapping("/complete/{challanId}")
+    public ResponseEntity<DeliveryChallanResponseDto> completeChallan(
+            @PathVariable Long challanId
+    ) {
+        return ResponseEntity.ok(service.completeChallan(challanId));
+    }
+
+    @DeleteMapping("/delete/{challanId}")
+    public ResponseEntity<String> deleteChallan(
+            @PathVariable Long challanId
+    ) {
+        service.deleteChallan(challanId);
         return ResponseEntity.ok("Delivery challan deleted successfully");
     }
 }

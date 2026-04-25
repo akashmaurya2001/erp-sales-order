@@ -40,9 +40,9 @@ public class VehicleMaster {
     @Column(name = "isActive")
     private Boolean isActive;
 
-    @Column(name = "createdAt", insertable = false, updatable = false)
+    @Column(name = "createdAt")
     private LocalDateTime createdAt;
 
-    @Column(name = "updatedAt", insertable = false, updatable = false)
+    @Column(name = "updatedAt")
     private LocalDateTime updatedAt;
 }

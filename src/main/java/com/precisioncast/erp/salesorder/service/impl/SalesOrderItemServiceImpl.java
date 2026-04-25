@@ -66,7 +66,6 @@ public class SalesOrderItemServiceImpl implements SalesOrderItemService {
         salesOrderItem.setCancelled(false);
 
         SalesOrderItem saved = salesOrderItemRepository.save(salesOrderItem);
-
         recalculateSalesOrderTotal(salesOrder);
 
         return mapToResponseDto(saved);

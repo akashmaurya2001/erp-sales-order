@@ -17,4 +17,5 @@ public class DispatchNoteResponseDto {
     private String vehicleNo;
     private String driverName;
     private String remarks;
+    private String status;
 }

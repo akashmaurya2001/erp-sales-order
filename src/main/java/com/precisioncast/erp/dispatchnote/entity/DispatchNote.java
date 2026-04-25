@@ -33,4 +33,7 @@ public class DispatchNote {
 
     @Column(name = "remarks")
     private String remarks;
+
+    @Column(name = "status")
+    private String status;
 }

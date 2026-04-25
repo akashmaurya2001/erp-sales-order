@@ -1,17 +1,18 @@
 package com.precisioncast.erp.deliverychallan.service;
 
-import com.precisioncast.erp.deliverychallan.dto.DeliveryChallanRequestDto;
 import com.precisioncast.erp.deliverychallan.dto.DeliveryChallanResponseDto;
 
 import java.util.List;
 
 public interface DeliveryChallanService {
 
-    DeliveryChallanResponseDto createDeliveryChallan(DeliveryChallanRequestDto requestDto);
+    DeliveryChallanResponseDto createChallan(Long salesOrderId, Long dispatchId);
 
-    List<DeliveryChallanResponseDto> getAllDeliveryChallans();
+    DeliveryChallanResponseDto getChallanById(Long challanId);
 
-    DeliveryChallanResponseDto getDeliveryChallanById(Long challanId);
+    List<DeliveryChallanResponseDto> getAllChallans();
 
-    void deleteDeliveryChallan(Long challanId);
+    DeliveryChallanResponseDto completeChallan(Long challanId);
+
+    void deleteChallan(Long challanId);
 }

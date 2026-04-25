@@ -12,15 +12,8 @@ import java.time.LocalDate;
 @Builder
 public class DispatchNoteRequestDto {
 
-    @NotNull(message = "Sales order id is required")
-    private Long salesOrderId;
-
     @NotNull(message = "Dispatch date is required")
     private LocalDate dispatchDate;
-
-    private String vehicleNo;
-
-    private String driverName;
 
     private String remarks;
 }

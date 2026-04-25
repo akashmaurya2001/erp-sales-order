@@ -10,13 +10,14 @@ import lombok.*;
 @Builder
 public class DriverMasterRequestDto {
 
-    private String uuid;
-
     @NotBlank(message = "Driver name is required")
     private String driverName;
 
+    @NotBlank(message = "License number is required")
     private String licenseNumber;
+
+    @NotBlank(message = "Phone number is required")
     private String phoneNumber;
+
     private String address;
-    private Boolean isActive;
 }

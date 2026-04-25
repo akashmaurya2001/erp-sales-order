@@ -10,14 +10,15 @@ import lombok.*;
 @Builder
 public class VehicleMasterRequestDto {
 
-    private String uuid;
-
     @NotBlank(message = "Vehicle number is required")
     private String vehicleNumber;
 
+    @NotBlank(message = "Vehicle type is required")
     private String vehicleType;
+
     private String capacity;
+
     private String ownerName;
+
     private String contactNumber;
-    private Boolean isActive;
 }

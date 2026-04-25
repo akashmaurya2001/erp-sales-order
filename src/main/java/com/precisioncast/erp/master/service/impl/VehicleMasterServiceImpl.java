@@ -1,76 +1,180 @@
 package com.precisioncast.erp.master.service.impl;
 
+import com.precisioncast.erp.master.repository.VehicleMasterRepository;
+import com.precisioncast.erp.master.dto.VehicleMasterBulkRequestDto;
 import com.precisioncast.erp.master.dto.VehicleMasterRequestDto;
 import com.precisioncast.erp.master.dto.VehicleMasterResponseDto;
 import com.precisioncast.erp.master.entity.VehicleMaster;
-import com.precisioncast.erp.master.repository.VehicleMasterRepository;
 import com.precisioncast.erp.master.service.VehicleMasterService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class VehicleMasterServiceImpl implements VehicleMasterService {
 
-    private final VehicleMasterRepository vehicleMasterRepository;
+    private final VehicleMasterRepository repository;
 
     @Override
-    public VehicleMasterResponseDto createVehicle(VehicleMasterRequestDto requestDto) {
-        VehicleMaster vehicle =  new VehicleMaster();
-        vehicle.setUuid(requestDto.getUuid());
-        vehicle.setVehicleNumber(requestDto.getVehicleNumber());
-        vehicle.setVehicleType(requestDto.getVehicleType());
-        vehicle.setCapacity(requestDto.getCapacity());
-        vehicle.setOwnerName(requestDto.getOwnerName());
-        vehicle.setContactNumber(requestDto.getContactNumber());
-        vehicle.setIsActive(requestDto.getIsActive() !=null ? requestDto.getIsActive() : true);
+    public VehicleMasterResponseDto createVehicle(VehicleMasterRequestDto dto) {
 
-        VehicleMaster saved = vehicleMasterRepository.save(vehicle);
-        return mapToResponseDto(saved);
+        repository.findByVehicleNumber(dto.getVehicleNumber())
+                .ifPresent(v -> {
+                    throw new IllegalStateException("Vehicle with same number already exists");
+                });
+
+        VehicleMaster vehicle = new VehicleMaster();
+        vehicle.setVehicleNumber(dto.getVehicleNumber());
+        vehicle.setUuid(UUID.randomUUID().toString());
+        vehicle.setVehicleType(dto.getVehicleType());
+        vehicle.setCapacity(dto.getCapacity());
+        vehicle.setOwnerName(dto.getOwnerName());
+        vehicle.setContactNumber(dto.getContactNumber());
+        vehicle.setIsActive(true);
+        vehicle.setCreatedAt(LocalDateTime.now());
+        vehicle.setUpdatedAt(LocalDateTime.now());
+
+        return map(repository.save(vehicle));
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<VehicleMasterResponseDto> getAllVehicles() {
-        List<VehicleMasterResponseDto> responseDto = new ArrayList<>();
-        for (VehicleMaster vehicle  : vehicleMasterRepository.findAll()) {
-            responseDto.add(mapToResponseDto(vehicle));
+    public List<VehicleMasterResponseDto> createBulkVehicles(VehicleMasterBulkRequestDto requestDto) {
+        List<VehicleMasterResponseDto> list = new ArrayList<>();
+
+        for (VehicleMasterRequestDto dto : requestDto.getVehicles()) {
+            list.add(createVehicle(dto));
         }
-        return responseDto;
+
+        return list;
     }
+
     @Override
-    @Transactional(readOnly = true)
+    public List<VehicleMasterResponseDto> getAllVehicles() {
+        List<VehicleMasterResponseDto> list = new ArrayList<>();
+
+        for (VehicleMaster v : repository.findAll()) {
+            if (Boolean.TRUE.equals(v.getIsActive())) {
+                list.add(map(v));
+            }
+        }
+
+        return list;
+    }
+
+    @Override
     public VehicleMasterResponseDto getVehicleById(Long vehicleId) {
-        VehicleMaster vehicle = vehicleMasterRepository.findById(vehicleId)
-                .orElseThrow(() -> new EntityNotFoundException("Vehicle not found with id: " + vehicleId));
-        return mapToResponseDto(vehicle);
+        return map(get(vehicleId));
+    }
+
+    @Override
+    public List<VehicleMasterResponseDto> searchVehicles(String number, String type, Boolean active) {
+
+        List<VehicleMasterResponseDto> list = new ArrayList<>();
+
+        for (VehicleMaster v : repository.findAll()) {
+
+            boolean match = true;
+
+            if (number != null && !v.getVehicleNumber().toLowerCase().contains(number.toLowerCase())) {
+                match = false;
+            }
+
+            if (type != null && !v.getVehicleType().toLowerCase().contains(type.toLowerCase())) {
+                match = false;
+            }
+
+            if (active != null && !v.getIsActive().equals(active)) {
+                match = false;
+            }
+
+            if (match) {
+                list.add(map(v));
+            }
+        }
+
+        return list;
+    }
+
+    @Override
+    public VehicleMasterResponseDto activateVehicle(Long vehicleId) {
+        VehicleMaster v = get(vehicleId);
+        v.setIsActive(true);
+        v.setUpdatedAt(LocalDateTime.now());
+        return map(repository.save(v));
+    }
+
+    @Override
+    public VehicleMasterResponseDto deactivateVehicle(Long vehicleId) {
+        VehicleMaster v = get(vehicleId);
+        v.setIsActive(false);
+        v.setUpdatedAt(LocalDateTime.now());
+        return map(repository.save(v));
+    }
+
+    @Override
+    public VehicleMasterResponseDto updateVehicle(Long vehicleId, VehicleMasterRequestDto dto) {
+
+        VehicleMaster vehicle = get(vehicleId);
+
+        repository.findByVehicleNumber(dto.getVehicleNumber())
+                .filter(v -> !v.getVehicleId().equals(vehicleId))
+                .ifPresent(v -> {
+                    throw new IllegalStateException("Vehicle number already used");
+                });
+
+        vehicle.setVehicleNumber(dto.getVehicleNumber());
+        vehicle.setVehicleType(dto.getVehicleType());
+        vehicle.setCapacity(dto.getCapacity());
+        vehicle.setOwnerName(dto.getOwnerName());
+        vehicle.setContactNumber(dto.getContactNumber());
+        vehicle.setUpdatedAt(LocalDateTime.now());
+
+        return map(repository.save(vehicle));
     }
 
     @Override
     public void deleteVehicle(Long vehicleId) {
-        VehicleMaster vehicle = vehicleMasterRepository.findById(vehicleId)
-                .orElseThrow(() -> new EntityNotFoundException("Vehicle not found with id: " + vehicleId));
-        vehicleMasterRepository.delete(vehicle);
+        VehicleMaster v = get(vehicleId);
+        v.setIsActive(false);
+        repository.save(v);
     }
 
-    private VehicleMasterResponseDto mapToResponseDto(VehicleMaster vehicle) {
+    @Override
+    public byte[] exportVehicle(Long vehicleId) {
+        return ("Vehicle Export ID: " + vehicleId).getBytes();
+    }
+
+    @Override
+    public List<String> getInOutHistory(Long vehicleId, LocalDate from, LocalDate to) {
+        List<String> list = new ArrayList<>();
+        list.add("Vehicle in/out history will be implemented later");
+        return list;
+    }
+
+    private VehicleMaster get(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Vehicle not found"));
+    }
+
+    private VehicleMasterResponseDto map(VehicleMaster v) {
         return VehicleMasterResponseDto.builder()
-                .vehicleId(vehicle.getVehicleId())
-                .uuid(vehicle.getUuid())
-                .vehicleNumber(vehicle.getVehicleNumber())
-                .vehicleType(vehicle.getVehicleType())
-                .capacity(vehicle.getCapacity())
-                .ownerName(vehicle.getOwnerName())
-                .contactNumber(vehicle.getContactNumber())
-                .isActive(vehicle.getIsActive())
-                .createdAt(vehicle.getCreatedAt())
-                .updatedAt(vehicle.getUpdatedAt())
+                .vehicleId(v.getVehicleId())
+                .uuid(v.getUuid())
+                .vehicleNumber(v.getVehicleNumber())
+                .vehicleType(v.getVehicleType())
+                .capacity(v.getCapacity())
+                .ownerName(v.getOwnerName())
+                .contactNumber(v.getContactNumber())
+                .isActive(v.getIsActive())
+                .createdAt(v.getCreatedAt())
+                .updatedAt(v.getUpdatedAt())
                 .build();
     }
 }
