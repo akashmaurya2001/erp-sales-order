@@ -36,10 +36,10 @@ public class SalesInvoice {
     @Column(name = "status")
     private String status;
 
-    @Column(name = "created_at", insertable = false, updatable = false)
+    @Column(name = "created_at",updatable = false,insertable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", insertable = false, updatable = false)
+    @Column(name = "updated_at",updatable = false,insertable = false)
     private LocalDateTime updatedAt;
 
 

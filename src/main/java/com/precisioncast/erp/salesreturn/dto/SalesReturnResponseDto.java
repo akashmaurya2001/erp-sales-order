@@ -4,7 +4,6 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
 
 @Getter
 @Setter
@@ -18,5 +17,4 @@ public class SalesReturnResponseDto {
     private LocalDate returnDate;
     private String reason;
     private BigDecimal totalAmount;
-    private List<SalesReturnItemResponseDto> items;
 }

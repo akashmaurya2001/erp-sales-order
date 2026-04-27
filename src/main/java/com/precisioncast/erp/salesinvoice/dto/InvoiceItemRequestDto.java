@@ -1,4 +1,4 @@
-package com.precisioncast.erp.salesreturn.dto;
+package com.precisioncast.erp.salesinvoice.dto;
 
 import lombok.*;
 
@@ -9,9 +9,9 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class SalesReturnItemRequestDto {
+public class InvoiceItemRequestDto {
 
     private Long itemId;
     private BigDecimal quantity;
-    private Long reasonId;
+    private BigDecimal rate;
 }

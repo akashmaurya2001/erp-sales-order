@@ -3,41 +3,84 @@ package com.precisioncast.erp.salesinvoice.controller;
 import com.precisioncast.erp.salesinvoice.dto.SalesInvoiceRequestDto;
 import com.precisioncast.erp.salesinvoice.dto.SalesInvoiceResponseDto;
 import com.precisioncast.erp.salesinvoice.service.SalesInvoiceService;
-import io.swagger.v3.oas.annotations.Hidden;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
-@Hidden
+
 @RestController
-@RequestMapping("/api/sales-invoices")
+@RequestMapping("/api/invoice")
 @RequiredArgsConstructor
 public class SalesInvoiceController {
 
-    private final SalesInvoiceService salesInvoiceService;
+    private final SalesInvoiceService service;
 
-    @PostMapping
-    public ResponseEntity<SalesInvoiceResponseDto> createSalesInvoice(
-            @Valid @RequestBody SalesInvoiceRequestDto requestDto) {
-        return ResponseEntity.ok(salesInvoiceService.createSalesInvoice(requestDto));
+    @PostMapping("/create/{salesOrderId}/{deliveryId}")
+    public ResponseEntity<SalesInvoiceResponseDto> create(
+            @PathVariable Long salesOrderId,
+            @PathVariable Long deliveryId,
+            @RequestBody SalesInvoiceRequestDto dto) {
+        return ResponseEntity.ok(service.createInvoice(salesOrderId, deliveryId, dto));
     }
 
-    @GetMapping
-    public ResponseEntity<List<SalesInvoiceResponseDto>> getAllSalesInvoices() {
-        return ResponseEntity.ok(salesInvoiceService.getAllSalesInvoices());
+    @PostMapping("/createManual")
+    public ResponseEntity<SalesInvoiceResponseDto> createManual(
+            @RequestBody SalesInvoiceRequestDto dto) {
+        return ResponseEntity.ok(service.createManualInvoice(dto));
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<SalesInvoiceResponseDto> getSalesInvoiceById(@PathVariable Long id) {
-        return ResponseEntity.ok(salesInvoiceService.getSalesInvoiceById(id));
+    @GetMapping("/list")
+    public ResponseEntity<List<SalesInvoiceResponseDto>> list() {
+        return ResponseEntity.ok(service.getAllInvoices());
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteSalesInvoice(@PathVariable Long id) {
-        salesInvoiceService.deleteSalesInvoice(id);
-        return ResponseEntity.ok("Sales invoice deleted successfully");
+    @GetMapping("/{invoiceId}")
+    public ResponseEntity<SalesInvoiceResponseDto> get(@PathVariable Long invoiceId) {
+        return ResponseEntity.ok(service.getInvoiceById(invoiceId));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<SalesInvoiceResponseDto>> search(
+            @RequestParam(required = false) Long customer,
+            @RequestParam(required = false) LocalDate from,
+            @RequestParam(required = false) LocalDate to,
+            @RequestParam(required = false) String status) {
+        return ResponseEntity.ok(service.searchInvoices(customer,from,to,status));
+    }
+
+    @PutMapping("/update/{invoiceId}")
+    public ResponseEntity<SalesInvoiceResponseDto> update(
+            @PathVariable Long invoiceId,
+            @RequestBody SalesInvoiceRequestDto dto) {
+        return ResponseEntity.ok(service.updateInvoice(invoiceId, dto));
+    }
+
+    @PatchMapping("/post/{invoiceId}")
+    public ResponseEntity<SalesInvoiceResponseDto> post(@PathVariable Long invoiceId) {
+        return ResponseEntity.ok(service.postInvoice(invoiceId));
+    }
+
+    @PatchMapping("/cancel/{invoiceId}")
+    public ResponseEntity<SalesInvoiceResponseDto> cancel(@PathVariable Long invoiceId) {
+        return ResponseEntity.ok(service.cancelInvoice(invoiceId));
+    }
+
+    @PatchMapping("/markPaid/{invoiceId}")
+    public ResponseEntity<SalesInvoiceResponseDto> markPaid(@PathVariable Long invoiceId) {
+        return ResponseEntity.ok(service.markPaid(invoiceId));
+    }
+
+    @DeleteMapping("/delete/{invoiceId}")
+    public ResponseEntity<String> delete(@PathVariable Long invoiceId) {
+        service.deleteInvoice(invoiceId);
+        return ResponseEntity.ok("Invoice deleted successfully");
+    }
+
+    @GetMapping("/export/{invoiceId}")
+    public ResponseEntity<byte[]> export(@PathVariable Long invoiceId) {
+        return ResponseEntity.ok(service.exportInvoice(invoiceId));
     }
 }

@@ -2,21 +2,19 @@ package com.precisioncast.erp.salesreturn.service.impl;
 
 import com.precisioncast.erp.salesinvoice.entity.SalesInvoice;
 import com.precisioncast.erp.salesinvoice.repository.SalesInvoiceRepository;
-import com.precisioncast.erp.salesreturn.dto.SalesReturnItemRequestDto;
-import com.precisioncast.erp.salesreturn.dto.SalesReturnItemResponseDto;
-import com.precisioncast.erp.salesreturn.dto.SalesReturnRequestDto;
 import com.precisioncast.erp.salesreturn.dto.SalesReturnResponseDto;
 import com.precisioncast.erp.salesreturn.entity.SalesReturn;
-import com.precisioncast.erp.salesreturn.entity.SalesReturnItem;
-import com.precisioncast.erp.salesreturn.repository.SalesReturnItemRepository;
 import com.precisioncast.erp.salesreturn.repository.SalesReturnRepository;
 import com.precisioncast.erp.salesreturn.service.SalesReturnService;
+import com.precisioncast.erp.salesorder.entity.SalesOrder;
+import com.precisioncast.erp.salesorder.repository.SalesOrderRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,109 +24,95 @@ import java.util.List;
 public class SalesReturnServiceImpl implements SalesReturnService {
 
     private final SalesReturnRepository salesReturnRepository;
-    private final SalesReturnItemRepository salesReturnItemRepository;
     private final SalesInvoiceRepository salesInvoiceRepository;
+    private final SalesOrderRepository salesOrderRepository;
 
     @Override
-    public SalesReturnResponseDto createSalesReturn(SalesReturnRequestDto requestDto) {
+    public SalesReturnResponseDto createSalesReturn(Long invoiceId, Long customerId) {
 
-        SalesInvoice salesInvoice = salesInvoiceRepository.findById(requestDto.getInvoiceId())
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Sales invoice not found with id: " + requestDto.getInvoiceId()
-                ));
+        SalesInvoice invoice = salesInvoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new EntityNotFoundException("Invoice not found with id: " + invoiceId));
 
-        SalesReturn salesReturn = new SalesReturn();
-        salesReturn.setInvoiceId(salesInvoice.getInvoiceId());
-        salesReturn.setReturnDate(requestDto.getReturnDate());
-        salesReturn.setReason(requestDto.getReason());
-
-        BigDecimal totalAmount = BigDecimal.ZERO;
-        SalesReturn savedReturn = salesReturnRepository.save(salesReturn);
-
-        List<SalesReturnItem> savedItems = new ArrayList<>();
-
-        for (SalesReturnItemRequestDto itemDto : requestDto.getItems()) {
-            BigDecimal amount = itemDto.getQuantity().multiply(itemDto.getRate());
-
-            SalesReturnItem item = new SalesReturnItem();
-            item.setReturnId(savedReturn.getReturnId());
-            item.setProductId(itemDto.getProductId());
-            item.setQuantity(itemDto.getQuantity());
-            item.setRate(itemDto.getRate());
-            item.setAmount(amount);
-
-            savedItems.add(salesReturnItemRepository.save(item));
-            totalAmount = totalAmount.add(amount);
+        if (!"PAID".equalsIgnoreCase(invoice.getStatus()) && !"POSTED".equalsIgnoreCase(invoice.getStatus())) {
+            throw new IllegalStateException("Sales return can be created only for POSTED or PAID invoice");
         }
 
-        savedReturn.setTotalAmount(totalAmount);
-        SalesReturn updatedReturn = salesReturnRepository.save(savedReturn);
+        SalesOrder salesOrder = salesOrderRepository.findById(invoice.getSalesOrderId())
+                .orElseThrow(() -> new EntityNotFoundException("Sales order not found with id: " + invoice.getSalesOrderId()));
 
-        return mapToResponseDto(updatedReturn, savedItems);
+        if (!customerId.equals(salesOrder.getCustomerId())) {
+            throw new IllegalStateException("Customer does not match with invoice sales order customer");
+        }
+
+        SalesReturn salesReturn = new SalesReturn();
+        salesReturn.setInvoiceId(invoice.getInvoiceId());
+        salesReturn.setReturnDate(LocalDate.now());
+        salesReturn.setReason("Sales return created");
+        salesReturn.setTotalAmount(BigDecimal.ZERO);
+
+        SalesReturn saved = salesReturnRepository.save(salesReturn);
+        return map(saved);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<SalesReturnResponseDto> getAllSalesReturns() {
-        List<SalesReturn> salesReturns = salesReturnRepository.findAll();
-        List<SalesReturnResponseDto> responseDto = new ArrayList<>();
+        List<SalesReturnResponseDto> responseList = new ArrayList<>();
 
-        for (SalesReturn salesReturn : salesReturns) {
-            List<SalesReturnItem> items = salesReturnItemRepository.findByReturnId(salesReturn.getReturnId());
-            responseDto.add(mapToResponseDto(salesReturn, items));
+        for (SalesReturn salesReturn : salesReturnRepository.findAll()) {
+            responseList.add(map(salesReturn));
         }
 
-        return responseDto;
+        return responseList;
     }
 
     @Override
     @Transactional(readOnly = true)
-    public SalesReturnResponseDto getSalesReturnById(Long returnId) {
-        SalesReturn salesReturn = salesReturnRepository.findById(returnId)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Sales return not found with id: " + returnId
-                ));
-
-        List<SalesReturnItem> items = salesReturnItemRepository.findByReturnId(returnId);
-
-        return mapToResponseDto(salesReturn, items);
+    public SalesReturnResponseDto getSalesReturnById(Long salesReturnId) {
+        return map(get(salesReturnId));
     }
 
     @Override
-    public void deleteSalesReturn(Long returnId) {
-        SalesReturn salesReturn = salesReturnRepository.findById(returnId)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Sales return not found with id: " + returnId
-                ));
+    public SalesReturnResponseDto approveSalesReturn(Long salesReturnId) {
+        SalesReturn salesReturn = get(salesReturnId);
 
-        List<SalesReturnItem> items = salesReturnItemRepository.findByReturnId(returnId);
-        salesReturnItemRepository.deleteAll(items);
+        salesReturn.setReason("APPROVED");
+
+        return map(salesReturnRepository.save(salesReturn));
+    }
+
+    @Override
+    public SalesReturnResponseDto rejectSalesReturn(Long salesReturnId) {
+        SalesReturn salesReturn = get(salesReturnId);
+
+        salesReturn.setReason("REJECTED");
+
+        return map(salesReturnRepository.save(salesReturn));
+    }
+
+    @Override
+    public void deleteSalesReturn(Long salesReturnId) {
+        SalesReturn salesReturn = get(salesReturnId);
+
+        if ("APPROVED".equalsIgnoreCase(salesReturn.getReason())) {
+            throw new IllegalStateException("Approved sales return cannot be deleted");
+        }
+
         salesReturnRepository.delete(salesReturn);
     }
 
-    private SalesReturnResponseDto mapToResponseDto(SalesReturn salesReturn, List<SalesReturnItem> items) {
-        List<SalesReturnItemResponseDto> itemResponseDto = new ArrayList<>();
+    private SalesReturn get(Long salesReturnId) {
+        return salesReturnRepository.findById(salesReturnId)
+                .orElseThrow(() -> new EntityNotFoundException("Sales return not found with id: " + salesReturnId));
+    }
 
-        for (SalesReturnItem item : items) {
-            SalesReturnItemResponseDto itemDto = SalesReturnItemResponseDto.builder()
-                    .itemId(item.getItemId())
-                    .returnId(item.getReturnId())
-                    .productId(item.getProductId())
-                    .quantity(item.getQuantity())
-                    .rate(item.getRate())
-                    .amount(item.getAmount())
-                    .build();
-
-            itemResponseDto.add(itemDto);
-        }
-
+    private SalesReturnResponseDto map(SalesReturn salesReturn) {
         return SalesReturnResponseDto.builder()
                 .returnId(salesReturn.getReturnId())
                 .invoiceId(salesReturn.getInvoiceId())
                 .returnDate(salesReturn.getReturnDate())
                 .reason(salesReturn.getReason())
                 .totalAmount(salesReturn.getTotalAmount())
-                .items(itemResponseDto)
                 .build();
     }
 }

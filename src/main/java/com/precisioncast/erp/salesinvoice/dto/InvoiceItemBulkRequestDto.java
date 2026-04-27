@@ -2,16 +2,14 @@ package com.precisioncast.erp.salesinvoice.dto;
 
 import lombok.*;
 
-import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class SalesInvoiceRequestDto {
+public class InvoiceItemBulkRequestDto {
 
-    private LocalDate invoiceDate;
-
-    private LocalDate dueDate;
+    private List<InvoiceItemRequestDto> items;
 }
