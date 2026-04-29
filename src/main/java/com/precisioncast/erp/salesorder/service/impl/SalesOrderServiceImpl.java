@@ -1,5 +1,6 @@
 package com.precisioncast.erp.salesorder.service.impl;
 
+import com.precisioncast.erp.common.exception.InvalidOperationException;
 import com.precisioncast.erp.master.repository.CustomerMasterRepository;
 import com.precisioncast.erp.master.repository.ItemMasterRepository;
 import com.precisioncast.erp.master.entity.CustomerMaster;
@@ -223,7 +224,7 @@ public class SalesOrderServiceImpl implements SalesOrderService {
         SalesOrder salesOrder = getSalesOrderEntity(salesOrderId);
 
         if (Boolean.TRUE.equals(salesOrder.getCustomerVerified())) {
-            throw new IllegalStateException("Customer is already verified for this sales order");
+            throw new InvalidOperationException("Customer is already verified for this sales order");
         }
 
         salesOrder.setCustomerVerified(true);
@@ -236,17 +237,42 @@ public class SalesOrderServiceImpl implements SalesOrderService {
     @Override
     public SalesOrderResponseDto markUrgent(Long salesOrderId) {
         SalesOrder salesOrder = getSalesOrderEntity(salesOrderId);
+
+        if (Boolean.TRUE.equals(salesOrder.getIsUrgent())) {
+            throw new InvalidOperationException("Sales order is already marked as urgent");
+        }
+
+        if (!"PENDING".equalsIgnoreCase(salesOrder.getOrderStatus())) {
+            throw new InvalidOperationException("Only PENDING sales order can be marked as urgent");
+        }
+
         salesOrder.setIsUrgent(true);
-        return mapToResponseDto(salesOrderRepository.save(salesOrder));
+
+        SalesOrderResponseDto responseDto = mapToResponseDto(salesOrderRepository.save(salesOrder));
+        responseDto.setMessage("Sales order marked as urgent successfully");
+        return responseDto;
     }
 
     @Override
     public SalesOrderResponseDto markHold(Long salesOrderId) {
         SalesOrder salesOrder = getSalesOrderEntity(salesOrderId);
-        salesOrder.setIsOnHold(true);
-        return mapToResponseDto(salesOrderRepository.save(salesOrder));
-    }
 
+
+        if (Boolean.TRUE.equals(salesOrder.getIsOnHold())) {
+            throw new InvalidOperationException("Sales order is already on hold");
+        }
+
+
+        if (!"PENDING".equalsIgnoreCase(salesOrder.getOrderStatus())) {
+            throw new InvalidOperationException("Only PENDING sales order can be marked as on hold");
+        }
+
+        salesOrder.setIsOnHold(true);
+
+        SalesOrderResponseDto responseDto = mapToResponseDto(salesOrderRepository.save(salesOrder));
+        responseDto.setMessage("Sales order marked as on hold successfully");
+        return responseDto;
+    }
     @Override
     public SalesOrderResponseDto confirmSalesOrder(Long salesOrderId) {
         SalesOrder salesOrder = getSalesOrderEntity(salesOrderId);

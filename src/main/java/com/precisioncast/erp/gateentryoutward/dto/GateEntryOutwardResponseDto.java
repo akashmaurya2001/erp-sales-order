@@ -26,6 +26,5 @@ public class GateEntryOutwardResponseDto {
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private List<GateEntryOutwardItemResponseDto> items;
 
 }

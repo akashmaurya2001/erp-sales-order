@@ -1,5 +1,6 @@
 package com.precisioncast.erp.salesorder.service.impl;
 
+import com.precisioncast.erp.common.exception.InvalidOperationException;
 import com.precisioncast.erp.customerpricelist.entity.CustomerPriceList;
 import com.precisioncast.erp.customerpricelist.repository.CustomerPriceListRepository;
 import com.precisioncast.erp.master.repository.ItemMasterRepository;
@@ -19,7 +20,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -39,7 +42,7 @@ public class SalesOrderItemServiceImpl implements SalesOrderItemService {
                 ));
 
         if (!"PENDING".equalsIgnoreCase(salesOrder.getOrderStatus())) {
-            throw new IllegalStateException("Items can only be added to PENDING sales order");
+            throw new InvalidOperationException("Items can only be added to PENDING sales order");
         }
 
         ItemMaster itemMaster = itemMasterRepository.findById(itemId)
@@ -79,7 +82,32 @@ public class SalesOrderItemServiceImpl implements SalesOrderItemService {
                 ));
 
         if (!"PENDING".equalsIgnoreCase(salesOrder.getOrderStatus())) {
-            throw new IllegalStateException("Items can only be added to PENDING sales order");
+            throw new InvalidOperationException("Items can only be added to PENDING sales order");
+        }
+
+        Set<Long> requestProductIds = new HashSet<>();
+
+        for (SalesOrderItemRequestDto itemDto : requestDto.getItems()) {
+            if (!requestProductIds.add(itemDto.getProductId())) {
+                throw new InvalidOperationException(
+                        "Duplicate productId found in request: " + itemDto.getProductId()
+                );
+            }
+        }
+
+        List<SalesOrderItem> existingItems =
+                salesOrderItemRepository.findBySalesOrder_SalesOrderId(salesOrderId);
+
+        for (SalesOrderItem existingItem : existingItems) {
+            if (Boolean.TRUE.equals(existingItem.getCancelled())) {
+                continue;
+            }
+
+            if (requestProductIds.contains(existingItem.getProductId())) {
+                throw new InvalidOperationException(
+                        "Product already exists in this sales order: " + existingItem.getProductId()
+                );
+            }
         }
 
         List<SalesOrderItemResponseDto> responseDto = new ArrayList<>();
@@ -105,14 +133,20 @@ public class SalesOrderItemServiceImpl implements SalesOrderItemService {
         }
 
         recalculateSalesOrderTotal(salesOrder);
-
         return responseDto;
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<SalesOrderItemResponseDto> getSalesOrderItems(Long salesOrderId) {
+
+        salesOrderRepository.findById(salesOrderId)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Sales order not found with id: " + salesOrderId
+                ));
+
         List<SalesOrderItem> items = salesOrderItemRepository.findBySalesOrder_SalesOrderId(salesOrderId);
+
         List<SalesOrderItemResponseDto> responseDto = new ArrayList<>();
 
         for (SalesOrderItem item : items) {
@@ -132,7 +166,7 @@ public class SalesOrderItemServiceImpl implements SalesOrderItemService {
         SalesOrder salesOrder = item.getSalesOrder();
 
         if (!"PENDING".equalsIgnoreCase(salesOrder.getOrderStatus())) {
-            throw new IllegalStateException("Only PENDING sales order items can be updated");
+            throw new InvalidOperationException("Only PENDING sales order items can be updated");
         }
 
         item.setQuantity(qty);
@@ -157,7 +191,7 @@ public class SalesOrderItemServiceImpl implements SalesOrderItemService {
         SalesOrder salesOrder = item.getSalesOrder();
 
         if (!"PENDING".equalsIgnoreCase(salesOrder.getOrderStatus())) {
-            throw new IllegalStateException("Only PENDING sales order items can be cancelled");
+            throw new InvalidOperationException("Only PENDING sales order items can be cancelled");
         }
 
         item.setCancelled(true);
@@ -179,7 +213,7 @@ public class SalesOrderItemServiceImpl implements SalesOrderItemService {
         SalesOrder salesOrder = item.getSalesOrder();
 
         if (!"PENDING".equalsIgnoreCase(salesOrder.getOrderStatus())) {
-            throw new IllegalStateException("Only PENDING sales order items can be deleted");
+            throw new InvalidOperationException("Only PENDING sales order items can be deleted");
         }
 
         salesOrderItemRepository.delete(item);

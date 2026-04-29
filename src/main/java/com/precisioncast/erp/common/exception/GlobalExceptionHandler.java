@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -110,6 +111,10 @@ public class GlobalExceptionHandler {
             message = "Quotation id must be a valid number";
         }
 
+        if ("salesOrderId".equals(ex.getName())) {
+            message = "SalesOrder id must be a valid number";
+        }
+
         response.put("message", message);
 
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
@@ -130,6 +135,17 @@ public class GlobalExceptionHandler {
         response.put("message", message);
 
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<Map<String, Object>> handleHttpRequestMethodNotSupportedException(HttpRequestMethodNotSupportedException ex) {
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("timestamp", LocalDateTime.now());
+        response.put("status", HttpStatus.METHOD_NOT_ALLOWED.value());
+        response.put("error", "Method Not Allowed");
+        response.put("message", "Request method '" + ex.getMethod() + "' is not supported for this API please use the correct HTTP method.");
+
+        return new ResponseEntity<>(response, HttpStatus.METHOD_NOT_ALLOWED);
     }
 
     @ExceptionHandler(Exception.class)
