@@ -52,9 +52,20 @@ public class GateEntryOutward {
     @Column(name = "status")
     private String status;
 
-    @Column(name = "createdAt", insertable = false, updatable = false)
+    @Column(name = "createdAt")
     private LocalDateTime createdAt;
 
-    @Column(name = "updatedAt", insertable = false, updatable = false)
+    @Column(name = "updatedAt")
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    public void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 }

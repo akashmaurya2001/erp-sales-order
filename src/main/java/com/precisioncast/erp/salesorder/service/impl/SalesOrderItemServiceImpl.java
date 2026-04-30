@@ -158,6 +158,15 @@ public class SalesOrderItemServiceImpl implements SalesOrderItemService {
 
     @Override
     public SalesOrderItemResponseDto updateSalesOrderItemQty(Long salesOrderItemId, BigDecimal qty) {
+
+        if (qty == null || qty.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new InvalidOperationException("Qty should be greater than 0");
+        }
+
+        if (qty.compareTo(new BigDecimal("999999")) > 0) {
+            throw new InvalidOperationException("Qty is too large. Maximum allowed quantity is 999999");
+        }
+
         SalesOrderItem item = salesOrderItemRepository.findById(salesOrderItemId)
                 .orElseThrow(() -> new EntityNotFoundException(
                         "Sales order item not found with id: " + salesOrderItemId
@@ -169,13 +178,17 @@ public class SalesOrderItemServiceImpl implements SalesOrderItemService {
             throw new InvalidOperationException("Only PENDING sales order items can be updated");
         }
 
-        item.setQuantity(qty);
-
         BigDecimal rate = item.getRate() != null ? item.getRate() : BigDecimal.ZERO;
-        item.setAmount(qty.multiply(rate));
+        BigDecimal amount = qty.multiply(rate);
+
+        if (amount.compareTo(new BigDecimal("9999999999.99")) > 0) {
+            throw new InvalidOperationException("Amount is too large. Please reduce quantity or rate");
+        }
+
+        item.setQuantity(qty);
+        item.setAmount(amount);
 
         SalesOrderItem updated = salesOrderItemRepository.save(item);
-
         recalculateSalesOrderTotal(salesOrder);
 
         return mapToResponseDto(updated);
@@ -192,6 +205,10 @@ public class SalesOrderItemServiceImpl implements SalesOrderItemService {
 
         if (!"PENDING".equalsIgnoreCase(salesOrder.getOrderStatus())) {
             throw new InvalidOperationException("Only PENDING sales order items can be cancelled");
+        }
+
+        if (Boolean.TRUE.equals(item.getCancelled())) {
+            throw new InvalidOperationException("Sales order item is already cancelled");
         }
 
         item.setCancelled(true);

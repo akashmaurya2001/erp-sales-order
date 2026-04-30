@@ -13,11 +13,7 @@ public class GateEntryOutwardRequestDto {
 
     private LocalDateTime entryDateTime;
 
-    private Long customerId;
-
     private String gateEntryNumber;
-
-    private String soNumber;
 
     private String dcNumber;
 
