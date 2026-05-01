@@ -16,13 +16,20 @@ public class TransportChallanResponseDto {
     private Long challanId;
     private String uuid;
     private String challanNumber;
+
     private Long vehicleId;
     private Long driverId;
+    private Long destinationWarehouseId;
+
+    private String vendor;
     private String sourceLocation;
     private String destinationLocation;
     private LocalDate challanDate;
     private BigDecimal totalWeight;
+    private String status;
     private String remarks;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private Long createdBy;
 }

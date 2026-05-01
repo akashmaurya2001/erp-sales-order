@@ -54,4 +54,16 @@ public class TransportChallan {
     @Column(name = "updatedAt", insertable = false, updatable = false)
     private LocalDateTime updatedAt;
 
+    @Column(name = "destination_warehouse_id")
+    private Long destinationWarehouseId;
+
+    @Column(name = "vendor")
+    private String vendor;
+
+    @Column(name = "status")
+    private String status;
+
+    @Column(name = "created_by")
+    private Long createdBy;
+
 }

@@ -10,12 +10,15 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TransportChallanRequestDto {
+public class TransportChallanManualRequestDto {
+
+    private Long vehicleId;
+    private Long driverId;
+    private Long destinationWarehouseId;
+    private Long createdBy;
 
     private String challanNumber;
     private String vendor;
-    private Long vehicleId;
-    private Long driverId;
     private String sourceLocation;
     private String destinationLocation;
     private LocalDate challanDate;
