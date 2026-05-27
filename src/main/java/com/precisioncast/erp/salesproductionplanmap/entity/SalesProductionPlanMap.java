@@ -3,11 +3,15 @@ package com.precisioncast.erp.salesproductionplanmap.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
+import java.sql.Timestamp;
 import java.util.UUID;
 
 @Entity
-@Table(name = "sales_production_plan_map")
+@Table(name = "sales_production_plan_map",
+        indexes = {
+                @Index(name = "idx_sales_order_id", columnList = "salesOrderId")
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -17,7 +21,6 @@ public class SalesProductionPlanMap {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
     private Long id;
 
     @Column(name = "uuid", columnDefinition = "char(36)")
@@ -29,13 +32,14 @@ public class SalesProductionPlanMap {
     @Column(name = "planId", nullable = false)
     private Long planId;
 
-    @Column(name = "createdAt", insertable = false, updatable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "createdAt", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP", insertable = false, updatable = false)
+    private Timestamp createdAt;
 
     @PrePersist
     public void prePersist() {
-        if (this.uuid == null || this.uuid.isBlank())
 
-            this.uuid = UUID.randomUUID().toString();
+        if (uuid == null || uuid.isBlank()) {
+            uuid = UUID.randomUUID().toString();
+        }
     }
 }

@@ -2,7 +2,7 @@ package com.precisioncast.erp.salesproductionplanmap.dto;
 
 import lombok.*;
 
-import java.time.LocalDateTime;
+import java.sql.Timestamp;
 
 @Getter
 @Setter
@@ -19,5 +19,5 @@ public class SalesProductionPlanMapResponseDto {
 
     private Long planId;
 
-    private LocalDateTime createdAt;
+    private Timestamp createdAt;
 }
