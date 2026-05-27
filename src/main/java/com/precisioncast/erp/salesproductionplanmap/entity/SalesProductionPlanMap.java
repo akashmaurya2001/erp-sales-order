@@ -38,5 +38,4 @@ public class SalesProductionPlanMap {
 
             this.uuid = UUID.randomUUID().toString();
     }
- 
 }
