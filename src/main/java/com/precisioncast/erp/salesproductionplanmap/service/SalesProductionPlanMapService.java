@@ -15,6 +15,8 @@ public interface SalesProductionPlanMapService {
 
     SalesProductionPlanMapResponseDto getById(Long id);
 
+    SalesProductionPlanMapResponseDto update(Long id, SalesProductionPlanMapRequestDto requestDto);
+
     List<SalesProductionPlanMapResponseDto> getBySalesOrderId(Long salesOrderId);
 
     List<SalesProductionPlanMapResponseDto> getByPlanId(Long planId);

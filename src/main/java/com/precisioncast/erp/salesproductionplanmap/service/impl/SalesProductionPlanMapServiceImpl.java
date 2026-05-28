@@ -16,8 +16,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class SalesProductionPlanMapServiceImpl
-        implements SalesProductionPlanMapService {
+public class SalesProductionPlanMapServiceImpl implements SalesProductionPlanMapService {
 
     private final SalesProductionPlanMapRepository repository;
 
@@ -62,6 +61,21 @@ public class SalesProductionPlanMapServiceImpl
     public SalesProductionPlanMapResponseDto getById(Long id) {
 
         return mapToResponse(get(id));
+    }
+
+    @Override
+    @Transactional
+    public SalesProductionPlanMapResponseDto update(
+            Long id,
+            SalesProductionPlanMapRequestDto requestDto) {
+
+        SalesProductionPlanMap entity = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Map Not Found"));
+
+        entity.setSalesOrderId(requestDto.getSalesOrderId());
+        entity.setPlanId(requestDto.getPlanId());
+
+        return mapToResponse(repository.save(entity));
     }
 
     @Override
